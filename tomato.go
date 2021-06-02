@@ -5,19 +5,20 @@ import (
 	"os"
 	"time"
 	"unicode/utf8"
+
 	"github.com/nsf/termbox-go"
 )
 
-var usage = ` tomato usage:
-tomato 25s
-tomato 25m
-tomato 1h20m20s
+var usage = `tomato usage:
+  tomato 25s
+  tomato 25m
+  tomato 1h20m20s
 `
 
 var (
 	timer  *time.Timer
 	ticker *time.Ticker
-	queues chan termbox.Event 
+	queues chan termbox.Event
 )
 
 const (
@@ -27,6 +28,7 @@ const (
 type Symbol []string
 
 func (s Symbol) width() int {
+	fmt.Println(s)
 	return utf8.RuneCountInString(s[0])
 }
 
@@ -39,10 +41,11 @@ type Text []Symbol
 func (t Text) width() (w int) {
 	w = 0
 	for _, s := range t {
+		fmt.Println(t)
 		// w += utf8.RuneCountInString(s[0])
 		w += s.width()
 	}
-	return 
+	return
 }
 
 func (t Text) height() int {
@@ -74,26 +77,39 @@ func flush() {
 }
 
 func format(d time.Duration) string {
-	h := fmt.Sprintf("%.0f", d.Hours())
-	m := fmt.Sprintf("%.0f", d.Minutes())
-	s := fmt.Sprintf("%.0f", d.Seconds())
-	if h == "0" {
-		str := fmt.Sprintf("%2.f:%2.f:%2.f", h, m, s)
+	h := fmt.Sprintf("%2.f", d.Hours())
+	m := fmt.Sprintf("%2.f", d.Minutes())
+	s := fmt.Sprintf("%2.f", d.Seconds())
+	fmt.Println(h, m, s)
+	if h == "00" {
+		return fmt.Sprintf("%d:%d:%d", h, m, s)
 	} else {
-		str := fmt.Sprintf("%2.f:%2.f", m, s)
+		return fmt.Sprintf("%d:%d", m, s)
 	}
-	return str
+}
+
+type Font map[rune][]string
+
+func toText(str string) Text {
+	fmt.Println(str)
+	text := make(Text, 0)
+	for _, runeValue := range str {
+		text = append(text, defaultFont[runeValue])
+	}
+	return text
 }
 
 // 画此刻的Text
 func draw(startX, startY int, t Text) {
+
 	x, y := startX, startY
 	for _, s := range t {
 		for _, line := range s {
 			for _, ch := range line {
 				termbox.SetCell(x, y, ch, termbox.ColorBlue, termbox.ColorBlue)
 			}
-		} 
+
+		}
 	}
 	flush()
 }
@@ -102,11 +118,10 @@ func countdown(d time.Duration) {
 	w, h := termbox.Size()
 	str := format(d)
 	text := toText(str)
-	startX, startY := w / 2 - text.width(), h / 2 - text.height() / 2
+	startX, startY := w/2-text.width()/2, h/2-text.height()/2
 	timeleft := d
 	start(timeleft)
-	draw(startX, startY)
-
+	draw(startX, startY, text)
 
 loop:
 	for {
@@ -122,7 +137,10 @@ loop:
 				start(d)
 			}
 		case <-ticker.C:
-			draw()
+			timeleft -= 1
+			str = format(timeleft)
+			text = toText(str)
+			draw(startX, startY, text)
 		case <-timer.C:
 			break loop
 		}
@@ -131,8 +149,9 @@ loop:
 }
 
 func main() {
+	fmt.Println(os.Args)
 	if len(os.Args) != 2 {
-		fmt.Sprintln(usage)
+		fmt.Println(usage)
 	}
 	duration, err := time.ParseDuration(os.Args[1])
 	if err != nil {
@@ -141,6 +160,6 @@ func main() {
 	go func() {
 		queues <- termbox.PollEvent()
 	}()
-	
+
 	countdown(duration)
 }
