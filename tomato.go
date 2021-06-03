@@ -97,8 +97,9 @@ func toText(str string) Text {
 	return text
 }
 
-// 画此刻的Text
+// Draw the moment, Text is like "00:25"
 func draw(startX, startY int, t Text) {
+	clear()
 	x, y := startX, startY
 	for _, s := range t {
 		for _, line := range s {
@@ -115,13 +116,12 @@ func draw(startX, startY int, t Text) {
 	flush()
 }
 
-func countdown(d time.Duration) {
+func countdown(timeleft time.Duration) {
 	w, h := termbox.Size()
-	clear()
-	str := format(d)
+	str := format(timeleft)
 	text := toText(str)
 	startX, startY := w/2-text.width()/2, h/2-text.height()/2
-	timeleft := d
+
 	start(timeleft)
 	draw(startX, startY, text)
 
@@ -129,7 +129,11 @@ loop:
 	for {
 		select {
 		case ev := <-queues:
+			if true {
+				fmt.Println(ev)
+			}
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
+				println(ev.Key)
 				exitCode = 2
 				break loop
 			}
@@ -143,12 +147,10 @@ loop:
 			timeleft -= time.Duration(tick)
 			str = format(timeleft)
 			text = toText(str)
-			// fmt.Println(str)
 			draw(startX, startY, text)
 		case <-timer.C:
 			break loop
 		}
-
 	}
 	termbox.Close()
 	if exitCode != 0 {
@@ -175,29 +177,6 @@ func main() {
 			queues <- termbox.PollEvent()
 		}
 	}()
-
-	countdown(duration)
+	timeleft := duration
+	countdown(timeleft)
 }
-
-// [
-// 	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
-// 	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
-// 	 [    ██╗ ╚═╝ ██╗ ╚═╝    ]
-// 	  [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]
-// 	  [██████╗  ╚════██╗  █████╔╝  ╚═══██╗ ██████╔╝ ╚═════╝ ]
-// 	  ]
-
-// [
-// 	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
-// 	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
-// 	[    ██╗ ╚═╝ ██╗ ╚═╝    ]
-// 	 [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]
-// 	[██████╗  ╚════██╗  █████╔╝ ██╔═══╝  ███████╗ ╚══════╝]
-// 	]
-
-// [
-// 	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
-// 	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
-// 	 [    ██╗ ╚═╝ ██╗ ╚═╝    ]
-// 	 [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]
-// 	  [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]]
