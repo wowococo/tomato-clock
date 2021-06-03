@@ -16,9 +16,10 @@ var usage = `tomato usage:
 `
 
 var (
-	timer  *time.Timer
-	ticker *time.Ticker
-	queues chan termbox.Event
+	timer    *time.Timer
+	ticker   *time.Ticker
+	queues   chan termbox.Event
+	exitCode int
 )
 
 const (
@@ -103,14 +104,13 @@ func draw(startX, startY int, t Text) {
 		for _, line := range s {
 			for _, ch := range line {
 				termbox.SetCell(x, y, ch, termbox.ColorDefault, termbox.ColorDefault)
-				x += 1
+				x++
 			}
 			x = startX
-			y += 1
+			y++
 		}
 		startX += s.width()
-		x = startX
-		y = startY
+		x, y = startX, startY
 	}
 	flush()
 }
@@ -130,26 +130,30 @@ loop:
 		select {
 		case ev := <-queues:
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
+				exitCode = 2
 				break loop
 			}
 			if ev.Ch == 'P' || ev.Ch == 'p' {
 				stop()
 			}
 			if ev.Ch == 'C' || ev.Ch == 'c' {
-				start(d)
+				start(timeleft)
 			}
 		case <-ticker.C:
-			timeleft -= 1 * time.Second
+			timeleft -= time.Duration(tick)
 			str = format(timeleft)
 			text = toText(str)
-			fmt.Println(text)
-			// draw(startX, startY, text)
+			// fmt.Println(str)
+			draw(startX, startY, text)
 		case <-timer.C:
 			break loop
 		}
 
 	}
 	termbox.Close()
+	if exitCode != 0 {
+		os.Exit(exitCode)
+	}
 }
 
 func main() {
@@ -160,9 +164,16 @@ func main() {
 	if err != nil {
 		fmt.Println("time format error", usage)
 	}
-	termbox.Init()
+
+	err = termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+
 	go func() {
-		queues <- termbox.PollEvent()
+		for {
+			queues <- termbox.PollEvent()
+		}
 	}()
 
 	countdown(duration)
