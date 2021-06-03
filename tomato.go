@@ -75,15 +75,15 @@ func flush() {
 	}
 }
 
+// fix: 1h25m25s
 func format(d time.Duration) string {
 	h := fmt.Sprintf("%02.f", d.Hours())
 	m := fmt.Sprintf("%02.f", d.Minutes())
 	s := fmt.Sprintf("%02.f", d.Seconds())
-	if h == "0" {
-		return fmt.Sprintf("%v:%v:%v", h, m, s)
+	if h == "00" {
+		return fmt.Sprintf("%v:%v", m, s)
 	} else {
-		str := fmt.Sprintf("%v:%v", m, s)
-		return str
+		return fmt.Sprintf("%v:%v:%v", h, m, s)
 	}
 }
 
@@ -133,7 +133,6 @@ loop:
 				fmt.Println(ev)
 			}
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
-				println(ev.Key)
 				exitCode = 2
 				break loop
 			}
@@ -172,6 +171,7 @@ func main() {
 		panic(err)
 	}
 
+	queues = make(chan termbox.Event)
 	go func() {
 		for {
 			queues <- termbox.PollEvent()
