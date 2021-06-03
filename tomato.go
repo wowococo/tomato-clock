@@ -28,7 +28,6 @@ const (
 type Symbol []string
 
 func (s Symbol) width() int {
-	fmt.Println(s)
 	return utf8.RuneCountInString(s[0])
 }
 
@@ -41,7 +40,6 @@ type Text []Symbol
 func (t Text) width() (w int) {
 	w = 0
 	for _, s := range t {
-		fmt.Println(t)
 		// w += utf8.RuneCountInString(s[0])
 		w += s.width()
 	}
@@ -63,7 +61,7 @@ func stop() {
 }
 
 func clear() {
-	err := termbox.Clear(termbox.ColorBlue, termbox.ColorBlue)
+	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	if err != nil {
 		panic(err)
 	}
@@ -77,21 +75,20 @@ func flush() {
 }
 
 func format(d time.Duration) string {
-	h := fmt.Sprintf("%2.f", d.Hours())
-	m := fmt.Sprintf("%2.f", d.Minutes())
-	s := fmt.Sprintf("%2.f", d.Seconds())
-	fmt.Println(h, m, s)
-	if h == "00" {
-		return fmt.Sprintf("%d:%d:%d", h, m, s)
+	h := fmt.Sprintf("%02.f", d.Hours())
+	m := fmt.Sprintf("%02.f", d.Minutes())
+	s := fmt.Sprintf("%02.f", d.Seconds())
+	if h == "0" {
+		return fmt.Sprintf("%v:%v:%v", h, m, s)
 	} else {
-		return fmt.Sprintf("%d:%d", m, s)
+		str := fmt.Sprintf("%v:%v", m, s)
+		return str
 	}
 }
 
 type Font map[rune][]string
 
 func toText(str string) Text {
-	fmt.Println(str)
 	text := make(Text, 0)
 	for _, runeValue := range str {
 		text = append(text, defaultFont[runeValue])
@@ -101,21 +98,26 @@ func toText(str string) Text {
 
 // 画此刻的Text
 func draw(startX, startY int, t Text) {
-
 	x, y := startX, startY
 	for _, s := range t {
 		for _, line := range s {
 			for _, ch := range line {
-				termbox.SetCell(x, y, ch, termbox.ColorBlue, termbox.ColorBlue)
+				termbox.SetCell(x, y, ch, termbox.ColorDefault, termbox.ColorDefault)
+				x += 1
 			}
-
+			x = startX
+			y += 1
 		}
+		startX += s.width()
+		x = startX
+		y = startY
 	}
 	flush()
 }
 
 func countdown(d time.Duration) {
 	w, h := termbox.Size()
+	clear()
 	str := format(d)
 	text := toText(str)
 	startX, startY := w/2-text.width()/2, h/2-text.height()/2
@@ -137,19 +139,20 @@ loop:
 				start(d)
 			}
 		case <-ticker.C:
-			timeleft -= 1
+			timeleft -= 1 * time.Second
 			str = format(timeleft)
 			text = toText(str)
-			draw(startX, startY, text)
+			fmt.Println(text)
+			// draw(startX, startY, text)
 		case <-timer.C:
 			break loop
 		}
 
 	}
+	termbox.Close()
 }
 
 func main() {
-	fmt.Println(os.Args)
 	if len(os.Args) != 2 {
 		fmt.Println(usage)
 	}
@@ -157,9 +160,42 @@ func main() {
 	if err != nil {
 		fmt.Println("time format error", usage)
 	}
+	termbox.Init()
 	go func() {
 		queues <- termbox.PollEvent()
 	}()
 
 	countdown(duration)
 }
+
+
+
+[
+	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
+	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
+	 [    ██╗ ╚═╝ ██╗ ╚═╝    ]
+	  [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]
+	  [██████╗  ╚════██╗  █████╔╝  ╚═══██╗ ██████╔╝ ╚═════╝ ]
+	  ]
+
+
+
+
+
+
+[
+	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ] 
+	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ] 
+	[    ██╗ ╚═╝ ██╗ ╚═╝    ]
+	 [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝] 
+	[██████╗  ╚════██╗  █████╔╝ ██╔═══╝  ███████╗ ╚══════╝]
+	]
+
+
+
+[
+	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ] 
+	[ ██████╗  ██╔═████╗ ██║██╔██║ ████╔╝██║ ╚██████╔╝  ╚═════╝ ]
+	 [    ██╗ ╚═╝ ██╗ ╚═╝    ] 
+	 [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]
+	  [ ██╗ ███║ ╚██║  ██║  ██║  ╚═╝]]
