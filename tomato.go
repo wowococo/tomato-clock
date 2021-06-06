@@ -61,6 +61,13 @@ func stop() {
 	ticker.Stop()
 }
 
+func tbinit() {
+	err := termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+}
+
 func clear() {
 	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	if err != nil {
@@ -77,13 +84,16 @@ func flush() {
 
 // fix: 1h25m25s
 func format(d time.Duration) string {
-	h := fmt.Sprintf("%02.f", d.Hours())
-	m := fmt.Sprintf("%02.f", d.Minutes())
-	s := fmt.Sprintf("%02.f", d.Seconds())
-	if h == "00" {
-		return fmt.Sprintf("%v:%v", m, s)
+	h := d / time.Hour
+	d -= h * time.Hour
+	m := d / time.Minute
+	d -= m * time.Minute
+	s := d / time.Second
+
+	if h < 1 {
+		return fmt.Sprintf("%d:%02d", m, s)
 	} else {
-		return fmt.Sprintf("%v:%v:%v", h, m, s)
+		return fmt.Sprintf("%d:%02d:%02d", h, m, s)
 	}
 }
 
@@ -129,9 +139,6 @@ loop:
 	for {
 		select {
 		case ev := <-queues:
-			if true {
-				fmt.Println(ev)
-			}
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
 				exitCode = 2
 				break loop
@@ -166,10 +173,7 @@ func main() {
 		fmt.Println("time format error", usage)
 	}
 
-	err = termbox.Init()
-	if err != nil {
-		panic(err)
-	}
+	tbinit()
 
 	queues = make(chan termbox.Event)
 	go func() {
@@ -179,4 +183,9 @@ func main() {
 	}()
 	timeleft := duration
 	countdown(timeleft)
+
+	// transfer an integer number of units to a duration
+	bt := time.Duration(5 * time.Second)
+	// start to break between tomatoes
+	breaktime(bt)
 }
