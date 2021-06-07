@@ -41,11 +41,11 @@ func createtb(db *sql.DB) {
 		startTime integer,
 		endTime integer, 
 		updateTime integer, 
-		status tinyint
-		FOREIGN KEY taskID REFERENCES task(id));`
+		status tinyint,
+		FOREIGN KEY(taskID) REFERENCES task(id));`
 
 	_, err = db.Exec(tomato)
-	hdlerr(err)	
+	hdlerr(err)
 
 }
 
