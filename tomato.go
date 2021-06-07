@@ -182,6 +182,7 @@ func main() {
 		}
 	}()
 	timeleft := duration
+	// start a tamato clock
 	countdown(timeleft)
 
 	// transfer an integer number of units to a duration
