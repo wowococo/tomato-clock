@@ -22,7 +22,7 @@ func createdb() *sql.DB {
 }
 
 func createtb(db *sql.DB) {
-	tomato := `CREATE TABLE IF NOT EXISTS tomato (
+	tomato := `CREATE TABLE IF NOT EXISTS tomato(
 		id integer primary key autoincrement, 
 		taskID int, 
 		duration integer,
@@ -31,8 +31,19 @@ func createtb(db *sql.DB) {
 		updateTime integer, 
 		status int);`
 
-	// task := ``
 	_, err := db.Exec(tomato)
+	hdlerr(err)
+
+	task := `CREATE TABLE IF NOT EXISTS task(
+		id integer primary key autoincrement,
+		name varchar(255),
+		listID integer,
+		status int,
+		createTime integer,
+		updateTime integer,
+		finishTime integer);`
+
+	_, err = db.Exec(task)
 	hdlerr(err)
 
 }
