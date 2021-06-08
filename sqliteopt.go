@@ -16,7 +16,7 @@ func init() {
 }
 
 func createdb() *sql.DB {
-	db, err := sql.Open("sqlite3", "TomatoClock.db")
+	db, err := sql.Open("sqlite3", "./TomatoClock.db")
 	hdlerr(err)
 	return db
 }
@@ -27,35 +27,51 @@ func createtb(db *sql.DB) {
 		name varchar(255),
 		listID integer,
 		status tinyint,
-		createTime integer,
-		updateTime integer,
-		finishTime integer);`
+		createTime text,
+		updateTime text,
+		finishTime text);`
 
-	_, err := db.Exec(task)
+	stmt, err := db.Prepare(task)
 	hdlerr(err)
+	stmt.Exec()
 
 	tomato := `CREATE TABLE IF NOT EXISTS tomato(
 		id integer primary key autoincrement, 
 		taskID integer, 
 		duration integer,
-		startTime integer,
-		endTime integer, 
-		updateTime integer, 
+		progress real,
+		startTime text,
+		endTime text, 
+		updateTime text, 
 		status tinyint,
 		FOREIGN KEY(taskID) REFERENCES task(id));`
 
-	_, err = db.Exec(tomato)
+	stmt, err = db.Prepare(tomato)
 	hdlerr(err)
+	stmt.Exec()
 
 }
 
-// func insert() {
+func insert(db *sql.DB) {
+	stmt, err := db.Prepare("insert into task values()")
+	hdlerr(err)
+	stmt.Exec()
+}
 
-// }
+func update(db *sql.DB) {
 
-// func query() {
+}
 
-// }
+func query(db *sql.DB) {
+
+	rows, err := db.Query("select sum(progress) from tomato where status in (1, 2)")
+	defer rows.Close()
+	hdlerr(err)
+	for rows.Next() {
+		err = rows.Scan()
+		hdlerr(err)
+	}
+}
 
 func hdlerr(err error) {
 	if err != nil {
