@@ -1,4 +1,4 @@
-package main
+package tomato
 
 import (
 	"log"
@@ -8,10 +8,10 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
-func breaktime(d time.Duration) {
+func breaktime(d time.Duration, tomatoID int64) {
 	echo()
 	tbinit()
-	countdown(d)
+	countdown(d, tomatoID)
 
 }
 

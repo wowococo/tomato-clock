@@ -1,10 +1,10 @@
-package main
+package tomato
 
 import (
-	// _ "./sqliteopt"
 	"fmt"
 	"os"
 	"time"
+	"tomato-clock/sqliteopt"
 	"unicode/utf8"
 
 	"github.com/nsf/termbox-go"
@@ -142,7 +142,7 @@ loop:
 		case ev := <-queues:
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
 				//update tomato(timefocused, progress, endTime, updateTime, status)
-				updateTomato(tomatoID)
+				sqliteopt.UpdateTomato(tomatoID)
 				exitCode = 2
 				break loop
 			}
@@ -159,7 +159,7 @@ loop:
 			draw(startX, startY, text)
 		case <-timer.C:
 			// update tomato(timefocused, progress, endTime, updateTime, status)
-			updateTomato(tomatoID)
+			sqliteopt.UpdateTomato(tomatoID)
 			break loop
 		}
 	}
@@ -170,7 +170,7 @@ loop:
 	}
 }
 
-func main() {
+func Tomato() {
 	if len(os.Args) != 2 {
 		fmt.Println(usage)
 	}
@@ -189,12 +189,12 @@ func main() {
 	}()
 	timeleft := duration
 	// start a tamato clock
-	taskID := insertTask("learngo")
-	tomatoID := insertTomato(taskID)
+	taskID := sqliteopt.InsertTask("learngo")
+	tomatoID := sqliteopt.InsertTomato(taskID)
 	countdown(timeleft, tomatoID)
 
 	// transfer an integer number of units to a duration
 	bt := time.Duration(5 * time.Second)
 	// start to break between tomatoes
-	breaktime(bt)
+	breaktime(bt, tomatoID)
 }

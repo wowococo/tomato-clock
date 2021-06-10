@@ -1,9 +1,8 @@
 package sqliteopt
 
 import (
-	"fmt"
-	"time"
 	"database/sql"
+	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -49,7 +48,7 @@ func createtb() {
 		endTime INTEGER DEFAULT NULL, 
 		updateTime INTEGER, 
 		status TINYINT,
-		FOREIGN KEY taskID REFERENCES task(id));`
+		FOREIGN KEY(taskID) REFERENCES task(id));`
 
 	stmt, err = db.Prepare(tomato)
 	hdlerr(err)
@@ -72,23 +71,23 @@ func insert(statement string, args ...interface{}) int64 {
 
 }
 
-func insertTask(args ...interface{}) int64 {
+func InsertTask(args ...interface{}) int64 {
 	statement := `INSERT INTO task(name, listID, status, createTime, updateTime) 
 			values(?, ?, ?, ?, ?)`
 	return insert(statement, args...)
 }
 
-func insertTomato(taskID int64, args ...interface{}) int64 {
+func InsertTomato(taskID int64, args ...interface{}) int64 {
 	s := fmt.Sprintf("values(%v, ?, ?, ?, ?, ?, ?)", taskID)
 	statement := `INSERT INTO tomato(
 			taskID, duration, timefocused, progress, 
 			startTime, updateTime, status) ` + s
-	
+
 	return insert(statement, args...)
-	
+
 }
 
-func updateTomato(args ...interface{}) int64 {
+func UpdateTomato(args ...interface{}) int64 {
 	statement := `UPDATE tomato SET timefocused=? 
 			AND progress=? AND endTime=? AND updateTime=? 
 			AND status=?
@@ -105,7 +104,7 @@ func updateTomato(args ...interface{}) int64 {
 	return affect
 }
 
-func query() {
+func Query() {
 	rows, err := db.Query("select sum(progress) from tomato where status in (1, 2)")
 	defer rows.Close()
 	hdlerr(err)
