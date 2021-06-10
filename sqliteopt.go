@@ -1,19 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"time"
 	"database/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var db *sql.DB
+
 const (
 	dbName = "TomatoClock"
 )
 
 func init() {
-	db := createdb()
-	createtb(db)
+	db = createdb()
+	createtb()
 }
 
 func createdb() *sql.DB {
@@ -22,7 +25,7 @@ func createdb() *sql.DB {
 	return db
 }
 
-func createtb(db *sql.DB) {
+func createtb() {
 	task := `CREATE TABLE IF NOT EXISTS task(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name VARCHAR(255),
@@ -40,6 +43,7 @@ func createtb(db *sql.DB) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT, 
 		taskID INTEGER, 
 		duration INTEGER,
+		timefocused INTEGER,
 		progress REAL,
 		startTime INTEGER,
 		endTime INTEGER DEFAULT NULL, 
@@ -53,25 +57,55 @@ func createtb(db *sql.DB) {
 
 }
 
-func insert(db *sql.DB, args ...interface{}) {
-	for _, arg := range args {
-		
-	}
-
-	 createTime := time.Now().Unix()
-	stmt, err := db.Prepare(
-		`INSERT INTO task(name, listID, status, createTime, updateTime) 
-		values(?,?,?,?,?)`)
+func insert(statement string, args ...interface{}) int64 {
+	stmt, err := db.Prepare(statement)
+	defer stmt.Close()
 	hdlerr(err)
-	stmt.Exec(stmt, name, 0, )
+
+	res, err := stmt.Exec(args...)
+	hdlerr(err)
+
+	id, err := res.LastInsertId()
+	hdlerr(err)
+
+	return id
+
 }
 
-func update(db *sql.DB) {
-
+func insertTask(args ...interface{}) int64 {
+	statement := `INSERT INTO task(name, listID, status, createTime, updateTime) 
+			values(?, ?, ?, ?, ?)`
+	return insert(statement, args...)
 }
 
-func query(db *sql.DB) {
+func insertTomato(taskID int64, args ...interface{}) int64 {
+	s := fmt.Sprintf("values(%v, ?, ?, ?, ?, ?, ?)", taskID)
+	statement := `INSERT INTO tomato(
+			taskID, duration, timefocused, progress, 
+			startTime, updateTime, status) ` + s
+	
+	return insert(statement, args...)
+	
+}
 
+func updateTomato(args ...interface{}) int64 {
+	statement := `UPDATE tomato SET timefocused=? 
+			AND progress=? AND endTime=? AND updateTime=? 
+			AND status=?
+			WHERE id=?`
+	stmt, err := db.Prepare(statement)
+	hdlerr(err)
+
+	res, err := stmt.Exec(args...)
+	hdlerr(err)
+
+	affect, err := res.RowsAffected()
+	hdlerr(err)
+
+	return affect
+}
+
+func query() {
 	rows, err := db.Query("select sum(progress) from tomato where status in (1, 2)")
 	defer rows.Close()
 	hdlerr(err)
