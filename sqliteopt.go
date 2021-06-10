@@ -1,6 +1,7 @@
 package main
 
 import (
+	"time"
 	"database/sql"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -23,25 +24,25 @@ func createdb() *sql.DB {
 
 func createtb(db *sql.DB) {
 	task := `CREATE TABLE IF NOT EXISTS task(
-		id integer primary key autoincrement,
-		name varchar(255),
-		listID integer,
-		status tinyint,
-		createTime integer,
-		updateTime integer,
-		finishTime integer);`
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name VARCHAR(255),
+		listID INTEGER DEFAULT 0,
+		status TINYINT,
+		createTime INTEGER,
+		updateTime INTEGER,
+		finishTime INTEGER DEFAULT NULL);`
 
 	_, err := db.Exec(task)
 	hdlerr(err)
 
 	tomato := `CREATE TABLE IF NOT EXISTS tomato(
-		id integer primary key autoincrement, 
-		taskID integer, 
-		duration integer,
-		startTime integer,
-		endTime integer, 
-		updateTime integer, 
-		status tinyint
+		id INTEGER PRIMARY KEY AUTOINCREMENT, 
+		taskID INTEGER, 
+		duration INTEGER,
+		startTime INTEGER,
+		endTime INTEGER DEFAULT NULL, 
+		updateTime INTEGER, 
+		status TINYINT,
 		FOREIGN KEY taskID REFERENCES task(id));`
 
 	_, err = db.Exec(tomato)
@@ -49,13 +50,15 @@ func createtb(db *sql.DB) {
 
 }
 
-// func insert() {
+func insert() {
+	 createTime := time.Now().Unix()
+	 stmt, err := "INSERT INTO task(name, listID, status, createTime) values()"
 
-// }
+}
 
-// func query() {
+func query() {
 
-// }
+}
 
 func hdlerr(err error) {
 	if err != nil {
