@@ -127,7 +127,7 @@ func draw(startX, startY int, t Text) {
 	flush()
 }
 
-func countdown(timeleft time.Duration) {
+func countdown(timeleft time.Duration, tomatoID int64) {
 	w, h := termbox.Size()
 	str := format(timeleft)
 	text := toText(str)
@@ -141,6 +141,8 @@ loop:
 		select {
 		case ev := <-queues:
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
+				//update tomato(timefocused, progress, endTime, updateTime, status)
+				updateTomato(tomatoID)
 				exitCode = 2
 				break loop
 			}
@@ -156,9 +158,12 @@ loop:
 			text = toText(str)
 			draw(startX, startY, text)
 		case <-timer.C:
+			// update tomato(timefocused, progress, endTime, updateTime, status)
+			updateTomato(tomatoID)
 			break loop
 		}
 	}
+
 	termbox.Close()
 	if exitCode != 0 {
 		os.Exit(exitCode)
@@ -184,9 +189,9 @@ func main() {
 	}()
 	timeleft := duration
 	// start a tamato clock
-	// sqliteopt.post()
-	fmt.Println(time.Now())
-	countdown(timeleft)
+	taskID := insertTask("learngo")
+	tomatoID := insertTomato(taskID)
+	countdown(timeleft, tomatoID)
 
 	// transfer an integer number of units to a duration
 	bt := time.Duration(5 * time.Second)
