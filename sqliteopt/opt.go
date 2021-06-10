@@ -1,4 +1,4 @@
-package main
+package sqliteopt
 
 import (
 	"database/sql"

@@ -1,6 +1,7 @@
 package main
 
 import (
+	// _ "./sqliteopt"
 	"fmt"
 	"os"
 	"time"
@@ -183,6 +184,8 @@ func main() {
 	}()
 	timeleft := duration
 	// start a tamato clock
+	// sqliteopt.post()
+	fmt.Println(time.Now())
 	countdown(timeleft)
 
 	// transfer an integer number of units to a duration
