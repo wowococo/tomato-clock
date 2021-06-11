@@ -71,13 +71,13 @@ func insert(statement string, args ...interface{}) int64 {
 
 }
 
-func InsertTask(args ...interface{}) int64 {
+func insertTask(args ...interface{}) int64 {
 	statement := `INSERT INTO task(name, listID, status, createTime, updateTime) 
 			values(?, ?, ?, ?, ?)`
 	return insert(statement, args...)
 }
 
-func InsertTomato(taskID int64, args ...interface{}) int64 {
+func insertTomato(taskID int64, args ...interface{}) int64 {
 	s := fmt.Sprintf("values(%v, ?, ?, ?, ?, ?, ?)", taskID)
 	statement := `INSERT INTO tomato(
 			taskID, duration, timefocused, progress, 
@@ -87,7 +87,7 @@ func InsertTomato(taskID int64, args ...interface{}) int64 {
 
 }
 
-func UpdateTomato(args ...interface{}) int64 {
+func updateTomato(args ...interface{}) int64 {
 	statement := `UPDATE tomato SET timefocused=? 
 			AND progress=? AND endTime=? AND updateTime=? 
 			AND status=?

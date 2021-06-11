@@ -27,6 +27,13 @@ const (
 	tick = time.Second
 )
 
+const (
+	Running  = 0
+	Finished = 1
+	Pause    = 2
+	Dropout  = 3
+)
+
 type Symbol []string
 
 func (s Symbol) width() int {
@@ -128,6 +135,8 @@ func draw(startX, startY int, t Text) {
 }
 
 func countdown(timeleft time.Duration, tomatoID int64) {
+	// tomato initial duration
+	d := timeleft
 	w, h := termbox.Size()
 	str := format(timeleft)
 	text := toText(str)
@@ -141,13 +150,13 @@ loop:
 		select {
 		case ev := <-queues:
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
-				//update tomato(timefocused, progress, endTime, updateTime, status)
-				sqliteopt.UpdateTomato(tomatoID)
+				sqliteopt.PutTomato(tomatoID, timeleft, d, Dropout)
 				exitCode = 2
 				break loop
 			}
 			if ev.Ch == 'P' || ev.Ch == 'p' {
 				stop()
+				sqliteopt.PutTomato(tomatoID, timeleft, d, Pause)
 			}
 			if ev.Ch == 'C' || ev.Ch == 'c' {
 				start(timeleft)
@@ -158,8 +167,7 @@ loop:
 			text = toText(str)
 			draw(startX, startY, text)
 		case <-timer.C:
-			// update tomato(timefocused, progress, endTime, updateTime, status)
-			sqliteopt.UpdateTomato(tomatoID)
+			sqliteopt.PutTomato(tomatoID, timeleft, d, Finished)
 			break loop
 		}
 	}
@@ -189,8 +197,8 @@ func Tomato() {
 	}()
 	timeleft := duration
 	// start a tamato clock
-	taskID := sqliteopt.InsertTask("learngo")
-	tomatoID := sqliteopt.InsertTomato(taskID)
+	taskID := sqliteopt.PostTask("learngo", Running)
+	tomatoID := sqliteopt.PostTomato(taskID, duration, Running)
 	countdown(timeleft, tomatoID)
 
 	// transfer an integer number of units to a duration
