@@ -134,7 +134,7 @@ func draw(startX, startY int, t Text) {
 	flush()
 }
 
-func countdown(timeleft time.Duration, tomatoID int64) {
+func countdown(timeleft time.Duration, tomatoID int64, bk bool) {
 	// tomato initial duration
 	d := timeleft
 	w, h := termbox.Size()
@@ -145,20 +145,30 @@ func countdown(timeleft time.Duration, tomatoID int64) {
 	start(timeleft)
 	draw(startX, startY, text)
 
+	// Execute only when you are focused on your time
+	notbk := func(bk bool, tomatoID int64, timeleft, d time.Duration, status int8) {
+		if !bk {
+			sqliteopt.PutTomato(tomatoID, timeleft, d, status)
+		}
+	}
+
 loop:
 	for {
 		select {
 		case ev := <-queues:
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyCtrlC || ev.Key == termbox.KeyEsc) {
-				sqliteopt.PutTomato(tomatoID, timeleft, d, Dropout)
+				// sqliteopt.PutTomato(tomatoID, timeleft, d, Dropout)
+				notbk(bk, tomatoID, timeleft, d, Dropout)
 				exitCode = 2
 				break loop
 			}
 			if ev.Ch == 'P' || ev.Ch == 'p' {
 				stop()
-				sqliteopt.PutTomato(tomatoID, timeleft, d, Pause)
+				// sqliteopt.PutTomato(tomatoID, timeleft, d, Pause)
+				notbk(bk, tomatoID, timeleft, d, Pause)
 			}
 			if ev.Ch == 'C' || ev.Ch == 'c' {
+				notbk(bk, tomatoID, timeleft, d, Running)
 				start(timeleft)
 			}
 		case <-ticker.C:
@@ -167,7 +177,8 @@ loop:
 			text = toText(str)
 			draw(startX, startY, text)
 		case <-timer.C:
-			sqliteopt.PutTomato(tomatoID, timeleft, d, Finished)
+			// sqliteopt.PutTomato(tomatoID, timeleft, d, Finished)
+			notbk(bk, tomatoID, 0, d, Finished)
 			break loop
 		}
 	}
@@ -199,7 +210,7 @@ func Tomato() {
 	// start a tamato clock
 	taskID := sqliteopt.PostTask("learngo", Running)
 	tomatoID := sqliteopt.PostTomato(taskID, duration, Running)
-	countdown(timeleft, tomatoID)
+	countdown(timeleft, tomatoID, false)
 
 	// transfer an integer number of units to a duration
 	bt := time.Duration(5 * time.Second)

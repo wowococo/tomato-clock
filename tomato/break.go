@@ -11,7 +11,7 @@ import (
 func breaktime(d time.Duration, tomatoID int64) {
 	echo()
 	tbinit()
-	countdown(d, tomatoID)
+	countdown(d, tomatoID, true)
 
 }
 

@@ -88,10 +88,8 @@ func insertTomato(taskID int64, args ...interface{}) int64 {
 }
 
 func updateTomato(args ...interface{}) int64 {
-	statement := `UPDATE tomato SET timefocused=? 
-			AND progress=? AND endTime=? AND updateTime=? 
-			AND status=?
-			WHERE id=?`
+	statement := `UPDATE tomato SET timefocused=?, progress=?, endTime=?, updateTime=?, status=? 
+		WHERE id=?`
 	stmt, err := db.Prepare(statement)
 	hdlerr(err)
 
