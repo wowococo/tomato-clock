@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 	"tomato-clock/sqliteopt"
+	"tomato-clock/stats"
 	"unicode/utf8"
 
 	"github.com/nsf/termbox-go"
@@ -116,13 +117,20 @@ func toText(str string) Text {
 }
 
 // Draw the moment, Text is like "00:25"
-func draw(startX, startY int, t Text) {
+func draw(startX, startY int, t Text, bk bool) {
 	clear()
 	x, y := startX, startY
+	var fg, bg termbox.Attribute
+	if bk {
+		fg = termbox.ColorGreen
+	} else {
+		fg = termbox.ColorDefault
+	}
+	bg = termbox.ColorDefault
 	for _, s := range t {
 		for _, line := range s {
 			for _, ch := range line {
-				termbox.SetCell(x, y, ch, termbox.ColorDefault, termbox.ColorDefault)
+				termbox.SetCell(x, y, ch, fg, bg)
 				x++
 			}
 			x = startX
@@ -143,7 +151,7 @@ func countdown(timeleft time.Duration, tomatoID int64, bk bool) {
 	startX, startY := w/2-text.width()/2, h/2-text.height()/2
 
 	start(timeleft)
-	draw(startX, startY, text)
+	draw(startX, startY, text, bk)
 
 	// Execute only when you are focused on your time
 	notbk := func(bk bool, tomatoID int64, timeleft, d time.Duration, status int8) {
@@ -175,7 +183,7 @@ loop:
 			timeleft -= time.Duration(tick)
 			str = format(timeleft)
 			text = toText(str)
-			draw(startX, startY, text)
+			draw(startX, startY, text, bk)
 		case <-timer.C:
 			// sqliteopt.PutTomato(tomatoID, timeleft, d, Finished)
 			notbk(bk, tomatoID, 0, d, Finished)
@@ -213,7 +221,10 @@ func Tomato() {
 	countdown(timeleft, tomatoID, false)
 
 	// transfer an integer number of units to a duration
-	bt := time.Duration(5 * time.Second)
+	// bt := time.Duration(5 * time.Second)
 	// start to break between tomatoes
-	breaktime(bt, tomatoID)
+	// breaktime(bt, tomatoID)
+
+	// stats
+	stats.Draw()
 }

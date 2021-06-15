@@ -25,7 +25,9 @@ func PutTomato(id int64, timeleft, d time.Duration, status int8) int64 {
 	endTime, updateTime := getTime()
 	focus := (d - timeleft)
 	progress := float64(focus) / float64(d)
-
+	// if status == 0 || status == 2 {
+	// fix: endTime should be updated
+	// }
 	affect := updateTomato(focus.Seconds(), progress, endTime, updateTime, status, id)
 	return affect
 }
