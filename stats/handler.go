@@ -59,52 +59,52 @@ func drawText() {
 
 	pk4 := widgets.NewParagraph()
 	pk4.Text = "本周专注时间"
-	pk4.SetRect(15, 6, 31, 12)
+	pk4.SetRect(15, 6, 31, 9)
 	pk4.Border = true
 
 	pv4 := widgets.NewParagraph()
 	pv4.Text = "4.5"
-	pv4.SetRect(0, 3, 15, 6)
+	pv4.SetRect(15, 9, 31, 12)
 	pv4.Border = true
 
 	pk5 := widgets.NewParagraph()
 	pk5.Text = "今日专注时间"
-	pk5.SetRect(32, 6, 48, 12)
+	pk5.SetRect(32, 6, 48, 9)
 	pk5.Border = true
 
 	pv5 := widgets.NewParagraph()
 	pv5.Text = "2"
-	pv5.SetRect(0, 3, 15, 6)
+	pv5.SetRect(32, 9, 48, 12)
 	pv5.Border = true
 
 	pk6 := widgets.NewParagraph()
 	pk6.Text = "总完成任务"
-	pk6.SetRect(0, 12, 15, 18)
+	pk6.SetRect(0, 12, 15, 15)
 	pk6.Border = true
 
 	pv6 := widgets.NewParagraph()
 	pv6.Text = "39"
-	pv6.SetRect(0, 3, 15, 6)
+	pv6.SetRect(0, 15, 15, 18)
 	pv6.Border = true
 
 	pk7 := widgets.NewParagraph()
 	pk7.Text = "本周完成任务"
-	pk7.SetRect(15, 12, 31, 18)
+	pk7.SetRect(15, 12, 31, 15)
 	pk7.Border = true
 
 	pv7 := widgets.NewParagraph()
 	pv7.Text = "0"
-	pv7.SetRect(0, 3, 15, 6)
+	pv7.SetRect(15, 15, 31, 18)
 	pv7.Border = true
 
 	pk8 := widgets.NewParagraph()
 	pk8.Text = "今日完成任务"
-	pk8.SetRect(32, 12, 48, 18)
+	pk8.SetRect(32, 12, 48, 15)
 	pk8.Border = true
 
 	pv8 := widgets.NewParagraph()
 	pv8.Text = "0"
-	pv8.SetRect(0, 3, 15, 6)
+	pv8.SetRect(32, 15, 48, 18)
 	pv8.Border = true
 
 	ui.Render(pk0, pv0, pk1, pv1, pk2, pv2, pk3, pv3, pk4, pv4, pk5, pv5, pk6, pv6, pk7, pv7, pk8, pv8)
