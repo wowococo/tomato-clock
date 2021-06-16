@@ -3,6 +3,7 @@ package sqliteopt
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -102,8 +103,25 @@ func updateTomato(args ...interface{}) int64 {
 	return affect
 }
 
-func Query() {
-	rows, err := db.Query("select sum(progress) from tomato where status in (1, 2)")
+func QueryTomato(total, thisweek, today bool) {
+	statement := "SELECT SUM(progress) FROM tomato WHERE status in（1,3)"
+	if total {
+		statement += ";"
+	}
+	if thisweek {
+		weekday := time.Now().Weekday()
+		st := time.Now().AddDate()
+		et := time.Now().AddDate()
+		statement += fmt.Sprintf(" and endTime between %v and %v;", st, et)
+	}
+	if today {
+		statement += " and endTime between x and y;"
+	}
+	Query(statement)
+}
+
+func Query(statement string) {
+	rows, err := db.Query(statement)
 	defer rows.Close()
 	hdlerr(err)
 	for rows.Next() {

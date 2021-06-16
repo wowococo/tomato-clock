@@ -7,15 +7,6 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
-/*
-  15     16     16
------|------|------|
-| 3
-| 3
------|------|------|
-
-*/
-
 func drawText() {
 	p0 := widgets.NewParagraph()
 	p0.Title = "总完成番茄数"
