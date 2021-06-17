@@ -103,31 +103,53 @@ func updateTomato(args ...interface{}) int64 {
 	return affect
 }
 
-func QueryTomato(total, thisweek, today bool) {
-	statement := "SELECT SUM(progress) FROM tomato WHERE status in（1,3)"
-	if total {
-		statement += ";"
+func Query(table, col, timeslot string) float64 {
+	var statement string
+	switch table {
+	case "tomato":
+		if col == "progress" {
+			statement = "SELECT SUM(progress) FROM tomato WHERE status in（1,3)"
+		}
+		if col == "timefocused" {
+			statement = "SELECT SUM(timefocused) FROM tomato WHERE 1=1"
+		}
+	case "task":
+		statement = "SELECT COUNT(id) FROM task WHERE status = 1"
 	}
-	if thisweek {
-		weekday := time.Now().Weekday()
-		st := time.Now().AddDate()
-		et := time.Now().AddDate()
-		statement += fmt.Sprintf(" and endTime between %v and %v;", st, et)
-	}
-	if today {
-		statement += " and endTime between x and y;"
-	}
-	Query(statement)
+	return _query(statement, timeslot)
 }
 
-func Query(statement string) {
+func _query(statement, timeslot string) float64 {
+	switch timeslot {
+	case "thisweek":
+		now := time.Now()
+		weekday := now.Weekday()
+		st := now.AddDate(0, 0, int(time.Monday-weekday))
+		// Sunday as the last day
+		et := now.AddDate(0, 0, int(time.Sunday+7-weekday))
+		st = time.Date(st.Year(), st.Month(), st.Day(), 0, 0, 0, 0, st.Location())
+		et = time.Date(et.Year(), et.Month(), et.Day(), 24, 0, 0, 0, et.Location())
+
+		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
+	case "today":
+		now := time.Now()
+		y, m, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+		st := time.Date(y, m, d, 0, 0, 0, 0, location)
+		et := time.Date(y, m, d+1, 0, 0, 0, 0, location)
+		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
+	default:
+		statement += ";"
+	}
+	
 	rows, err := db.Query(statement)
 	defer rows.Close()
 	hdlerr(err)
+	var res float64
 	for rows.Next() {
-		err = rows.Scan()
+		err = rows.Scan(&res)
 		hdlerr(err)
 	}
+	return res
 }
 
 func hdlerr(err error) {
