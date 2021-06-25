@@ -2,10 +2,18 @@ package stats
 
 import (
 	"log"
+	"termdash/cell"
+	"termdash/container"
+	"termdash/widgets/linechart"
 	"tomato-clock/sqliteopt"
 
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/tcell"
+	"github.com/mum4k/termdash/widgets/linechart"
 )
 
 func drawText() {
@@ -75,7 +83,42 @@ func drawText() {
 	ui.Render(p0, p1, p2, p3, p4, p5, p6, p7, p8)
 }
 
+func inputs() {
+
+}
+
+func playLine() {
+
+}
 func drawLine() {
+	t, err := tcell.New()
+	hdlerr(err)
+
+	defer t.Close()
+
+	lc, err := linechart.New(
+		linechart.AxesCellOpts(cell.FgColor(cell.ColorYellow)),
+		linechart.XLabelCellOpts(cell.FgColor(cell.ColorCyan)),
+		linechart.YLabelCellOpts(cell.FgColor(cell.ColorAqua)),	
+)
+
+	hdlerr(err)
+	go playLine()
+
+	c, err := container.New(
+		t,
+		container.Border(linestyle.Round),
+		container.BorderColor(cell.ColorRed),
+		container.BorderTitle("每周番茄数"),
+		container.PlaceWidget(lc),
+	)
+	hdlerr(err)
+
+	quitter := func() {
+		if 
+	}
+
+	// terminal.Controller()
 
 }
 
@@ -98,4 +141,10 @@ func Draw() {
 
 	}
 
+}
+
+func hdlerr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
