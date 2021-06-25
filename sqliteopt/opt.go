@@ -3,6 +3,7 @@ package sqliteopt
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -33,7 +34,7 @@ func createtb() {
 		status TINYINT,
 		createTime INTEGER,
 		updateTime INTEGER,
-		finishTime INTEGER DEFAULT NULL);`
+		endTime INTEGER DEFAULT NULL);`
 
 	stmt, err := db.Prepare(task)
 	hdlerr(err)
@@ -103,12 +104,12 @@ func updateTomato(args ...interface{}) int64 {
 	return affect
 }
 
-func Query(table, col, timeslot string) float64 {
+func Query(table, col, timeslot string) string {
 	var statement string
 	switch table {
 	case "tomato":
 		if col == "progress" {
-			statement = "SELECT SUM(progress) FROM tomato WHERE status in（1,3)"
+			statement = "SELECT SUM(progress) FROM tomato WHERE status in (1,3)"
 		}
 		if col == "timefocused" {
 			statement = "SELECT SUM(timefocused) FROM tomato WHERE 1=1"
@@ -116,7 +117,17 @@ func Query(table, col, timeslot string) float64 {
 	case "task":
 		statement = "SELECT COUNT(id) FROM task WHERE status = 1"
 	}
-	return _query(statement, timeslot)
+	res := _query(statement, timeslot)
+	prec := 1
+	switch table {
+	case "task":
+		prec = 0
+	case "tomato":
+		if col == "timefocused" {
+			res = res / (60 * 60)
+		}
+	}
+	return strconv.FormatFloat(res, 'f', prec, 64)
 }
 
 func _query(statement, timeslot string) float64 {
@@ -140,7 +151,7 @@ func _query(statement, timeslot string) float64 {
 	default:
 		statement += ";"
 	}
-	
+
 	rows, err := db.Query(statement)
 	defer rows.Close()
 	hdlerr(err)
