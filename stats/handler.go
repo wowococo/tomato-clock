@@ -2,10 +2,18 @@ package stats
 
 import (
 	"log"
+	"termdash/terminal/terminalapi"
 	"tomato-clock/sqliteopt"
 
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/tcell"
+	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgets/linechart"
 )
 
 func drawText() {
@@ -75,8 +83,43 @@ func drawText() {
 	ui.Render(p0, p1, p2, p3, p4, p5, p6, p7, p8)
 }
 
-func drawLine() {
+func inputs() {
 
+}
+
+func playLineChart() {
+
+}
+
+func drawLine() {
+	t, err := tcell.New()
+	hdlerr(err)
+	defer t.Close()
+
+	lc, err := linechart.New(
+		linechart.AxesCellOpts(cell.FgColor(cell.ColorDefault)),
+		linechart.XLabelCellOpts(cell.FgColor(cell.ColorBlue)),
+		linechart.YLabelCellOpts(cell.FgColor(cell.ColorFuchsia)),
+	)
+	hdlerr(err)
+
+	go playLineChart()
+
+	c, err := container.New(
+		t,
+		container.BorderTitle("tomatoes in a week"),
+		container.BorderColor(cell.ColorRed),
+		container.PlaceWidget(lc),
+	)
+
+	quitter := func(k *terminalapi.Keyboard) {
+		if k.Key == "q"|k.Key == "Q" {
+			return
+		}
+	}
+
+	_, err = termdash.NewController(t, c, termdash.KeyboardSubscriber(quitter))
+	hdlerr(err)
 }
 
 func Draw() {
@@ -86,16 +129,20 @@ func Draw() {
 	defer ui.Close()
 
 	go drawText()
-	// go drawLine()
+	go drawLine()
 
 	uiEvents := ui.PollEvents()
 	for {
 
 		switch ev := <-uiEvents; ev.ID {
 		case "q", "<C-c>":
-			return // break is not working
+			return // if break is not working
 		}
-
 	}
+}
 
+func hdlerr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
