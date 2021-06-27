@@ -2,7 +2,6 @@ package stats
 
 import (
 	"log"
-	"termdash/terminal/terminalapi"
 	"tomato-clock/sqliteopt"
 
 	ui "github.com/gizak/termui/v3"
@@ -111,6 +110,7 @@ func drawLine() {
 		container.BorderColor(cell.ColorRed),
 		container.PlaceWidget(lc),
 	)
+	hdlerr(err)
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == "q"|k.Key == "Q" {
