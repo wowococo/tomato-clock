@@ -106,6 +106,7 @@ func drawLine() {
 
 	c, err := container.New(
 		t,
+		container.Border(linestyle.Light),
 		container.BorderTitle("tomatoes in a week"),
 		container.BorderColor(cell.ColorRed),
 		container.PlaceWidget(lc),
@@ -113,7 +114,7 @@ func drawLine() {
 	hdlerr(err)
 
 	quitter := func(k *terminalapi.Keyboard) {
-		if k.Key == "q"|k.Key == "Q" {
+		if k.Key == 'q' || k.Key == 'Q' {
 			return
 		}
 	}
@@ -129,7 +130,7 @@ func Draw() {
 	defer ui.Close()
 
 	go drawText()
-	go drawLine()
+	// go drawLine()
 
 	uiEvents := ui.PollEvents()
 	for {

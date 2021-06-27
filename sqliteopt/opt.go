@@ -109,13 +109,14 @@ func Query(table, col, timeslot string) string {
 	switch table {
 	case "tomato":
 		if col == "progress" {
-			statement = "SELECT SUM(progress) FROM tomato WHERE status in (1,3)"
+			// coalesce accepts at least two arguments and return the first non-null value, to avoid sum(progress) is NULL
+			statement = "SELECT COALESCE(SUM(progress), 0) FROM tomato WHERE status in (1,3)"
 		}
 		if col == "timefocused" {
-			statement = "SELECT SUM(timefocused) FROM tomato WHERE 1=1"
+			statement = "SELECT COALESCE(SUM(timefocused), 0) FROM tomato WHERE 1=1"
 		}
 	case "task":
-		statement = "SELECT COUNT(id) FROM task WHERE status = 1"
+		statement = "SELECT COALESCE(COUNT(id), 0) FROM task WHERE status = 1"
 	}
 	res := _query(statement, timeslot)
 	prec := 1

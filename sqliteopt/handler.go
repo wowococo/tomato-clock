@@ -32,8 +32,6 @@ func PutTomato(id int64, timeleft, d time.Duration, status int8) int64 {
 	return affect
 }
 
-func 
-
 func getTime() (st, ut int64) {
 	st = time.Now().Unix()
 	ut = st
