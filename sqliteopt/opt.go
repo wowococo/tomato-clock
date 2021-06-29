@@ -104,7 +104,10 @@ func updateTomato(args ...interface{}) int64 {
 	return affect
 }
 
-func Query(table, col, timeslot string) string {
+type Metric string
+
+// metrics needed to query
+func (mtc Metric) Query(table, col, timeslot string) string {
 	var statement string
 	switch table {
 	case "tomato":
@@ -162,6 +165,36 @@ func _query(statement, timeslot string) float64 {
 		hdlerr(err)
 	}
 	return res
+}
+
+type tomatoLC string
+
+// linechart inputs needed to query
+func (tmtLC tomatoLC) Query(table, col, timeslot string) string {
+	var statement string
+	switch table {
+	case "tomato":
+		if col == "progress" {
+			// coalesce accepts at least two arguments and return the first non-null value, to avoid sum(progress) is NULL
+			statement = "SELECT COALESCE(SUM(progress), 0) FROM tomato WHERE status in (1,3)"
+		}
+		if col == "timefocused" {
+			statement = "SELECT COALESCE(SUM(timefocused), 0) FROM tomato WHERE 1=1"
+		}
+	case "task":
+		statement = "SELECT COALESCE(COUNT(id), 0) FROM task WHERE status = 1"
+	}
+	res := _query(statement, timeslot)
+	prec := 1
+	switch table {
+	case "task":
+		prec = 0
+	case "tomato":
+		if col == "timefocused" {
+			res = res / (60 * 60)
+		}
+	}
+	return strconv.FormatFloat(res, 'f', prec, 64)
 }
 
 func hdlerr(err error) {
