@@ -1,11 +1,12 @@
 package stats
 
 import (
+	"context"
 	"log"
 	"tomato-clock/sqliteopt"
 
 	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
+	"github.com/gizak/termui/v3/widgets/text"
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
@@ -81,20 +82,18 @@ func drawText() {
 
 	ui.Render(p0, p1, p2, p3, p4, p5, p6, p7, p8)
 }
-
-func inputs() {
-
+type widgets struct {
+	t text.Text
+	lc *linechart.LineChart
 }
 
-func playLineChart() {
-
+func inputs() []float64 {
+	var values []float64
+	//todo
+	return values
 }
 
-func drawLine() {
-	t, err := tcell.New()
-	hdlerr(err)
-	defer t.Close()
-
+func newLineChart() {
 	lc, err := linechart.New(
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorDefault)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorBlue)),
@@ -102,45 +101,61 @@ func drawLine() {
 	)
 	hdlerr(err)
 
-	go playLineChart()
+	values := inputs()
+	labels := map[int]string{
 
-	c, err := container.New(
-		t,
-		container.Border(linestyle.Light),
-		container.BorderTitle("tomatoes in a week"),
-		container.BorderColor(cell.ColorRed),
-		container.PlaceWidget(lc),
-	)
-	hdlerr(err)
-
-	quitter := func(k *terminalapi.Keyboard) {
-		if k.Key == 'q' || k.Key == 'Q' {
-			return
-		}
 	}
-
-	_, err = termdash.NewController(t, c, termdash.KeyboardSubscriber(quitter))
+	err = lc.Series("weektomato", values, linechart.SeriesXLabels(labels))
 	hdlerr(err)
+	
 }
+
+func newWidgets() *widgets {
+	lc, err := newLineChart()
+
+}
+
+const rootID = "root"
 
 func Draw() {
-	if err := ui.Init(); err != nil {
-		log.Fatalf("failed to initialize termui: %v", err)
-	}
-	defer ui.Close()
+	t, err := tcell.New()
+	hdlerr(err)
+	defer t.Close()
 
-	go drawText()
-	// go drawLine()
+	c, err := container.New(t, container.ID(rootID))
+	hdlerr(err)
 
-	uiEvents := ui.PollEvents()
-	for {
+	ctx, cancel := context.WithCancel(context.Background())
 
-		switch ev := <-uiEvents; ev.ID {
-		case "q", "<C-c>":
-			return // if break is not working
-		}
-	}
+	widgets, err := newWidgets()
+
+
+	// quitter := func(k *terminalapi.Keyboard) {
+	// 	if k.Key == 'q' || k.Key == 'Q' {
+	// 		return
+	// 	}
+	// }
+
 }
+
+// func Draw() {
+// 	if err := ui.Init(); err != nil {
+// 		log.Fatalf("failed to initialize termui: %v", err)
+// 	}
+// 	defer ui.Close()
+
+// 	// go drawText()
+// 	go drawLine()
+
+// 	uiEvents := ui.PollEvents()
+// 	for {
+
+// 		switch ev := <-uiEvents; ev.ID {
+// 		case "q", "<C-c>":
+// 			return // if break is not working
+// 		}
+// 	}
+// }
 
 func hdlerr(err error) {
 	if err != nil {
