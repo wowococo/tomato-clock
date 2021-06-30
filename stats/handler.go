@@ -13,6 +13,7 @@ import (
 	_ "github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgets/button"
 	"github.com/mum4k/termdash/widgets/linechart"
 	"github.com/mum4k/termdash/widgets/text"
 )
@@ -85,8 +86,9 @@ import (
 // }
 
 type widgets struct {
-	t  text.Text
-	lc *linechart.LineChart
+	t      text.Text
+	lc     *linechart.LineChart
+	button *button.Button
 }
 
 func inputs() []float64 {
@@ -111,6 +113,12 @@ func newLineChart() (*linechart.LineChart, error) {
 	err = lc.Series("weektomato", values, linechart.SeriesXLabels(labels))
 	return lc, err
 
+}
+
+func newText() (*text.Text, error) {
+	t, err := text.New()
+	err = t.Write("总完成番茄数", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	return t, err
 }
 
 func newWidgets() *widgets {
