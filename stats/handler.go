@@ -2,8 +2,9 @@ package stats
 
 import (
 	"context"
+	"fmt"
 	_ "fmt"
-	_ "time"
+	"time"
 	"tomato-clock/sqliteopt"
 
 	"github.com/mum4k/termdash"
@@ -34,13 +35,39 @@ func inputs() []float64 {
 	return values
 }
 
-// func dtmtInputs() []float64 {
-// 	var (
-// 		values []float64
-// 		tmtLC  sqliteopt.TomatoLC
-// 	)
-// 	tmtLC.Query()
-// }
+var tmtLC sqliteopt.TomatoLC
+
+// daily tomato linechart
+func dtmtInputs() ([]float64, map[int]string) {
+	var (
+		values []float64
+	)
+	now := time.Now()
+	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+	start := time.Date(y, M-1, d, 0, 0, 0, 0, location)
+	end := time.Date(y, M, d, 0, 0, 0, 0, location)
+	diff := end.Sub(start)
+	diffdays := int(diff.Hours() / 24)
+
+	midays := diffdays / 2
+	mid := time.Date(y, M-1, d+midays, 0, 0, 0, 0, location)
+
+	var XLabels = map[int]string{
+		0:        fmt.Sprintf("%v月%v日", start.Month(), start.Day()),
+		midays:   fmt.Sprintf("%v月%v日", mid.Month(), mid.Day()),
+		diffdays: fmt.Sprintf("%v月%v日", end.Month(), end.Day()),
+	}
+
+	if start.Year() == y {
+		for i := 0; i <= diffdays; i++ {
+			values = append(values, 0)
+		}
+	}
+
+	v := tmtLC.Query(tamatoTable, "", untilToday)
+
+	return values, XLabels
+}
 
 type lCharts struct {
 	dtmt  *linechart.LineChart
