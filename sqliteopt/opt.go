@@ -135,9 +135,10 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 }
 
 func _query(statement, timeslot string) float64 {
+	now := time.Now()
+	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
 	switch timeslot {
 	case "thisweek":
-		now := time.Now()
 		weekday := now.Weekday()
 		st := now.AddDate(0, 0, int(time.Monday-weekday))
 		// Sunday as the last day
@@ -147,13 +148,29 @@ func _query(statement, timeslot string) float64 {
 
 		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
 	case "today":
-		now := time.Now()
-		y, m, d, location := now.Year(), now.Month(), now.Day(), now.Location()
-		st := time.Date(y, m, d, 0, 0, 0, 0, location)
-		et := time.Date(y, m, d+1, 0, 0, 0, 0, location)
+		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+		st := time.Date(y, M, d, 0, 0, 0, 0, location)
+		et := time.Date(y, M, d+1, 0, 0, 0, 0, location)
 		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
 	default:
 		statement += ";"
+	case "untiltoday":
+		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+		st := time.Date(y, M, d, 0, 0, 0, 0, location)
+		et := now
+		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY day;", st.Unix(), et.Unix())
+	case "untilweek":
+		weekday := now.Weekday()
+		mondate := now.AddDate(0, 0, int(time.Monday-weekday))
+		y, M, d, location := mondate.Year(), mondate.Month(), mondate.Day(), mondate.Location()
+		st := time.Date(y, M-6, d, 0, 0, 0, 0, location)
+		et := now
+		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY week;", st.Unix(), et.Unix())
+	case "untilmonth":
+		// y, M, location := now.Year(), now.Month(), now.Location()
+		st := time.Date(y-1, M, 1, 0, 0, 0, 0, location)
+		et := now
+		statement += fmt.Sprint(" and endTime >= st and endTime <= now GROUP BY month;", st.Unix(), et.Unix())
 	}
 
 	rows, err := db.Query(statement)
@@ -174,15 +191,23 @@ func (tmtLC tomatoLC) Query(table, col, timeslot string) string {
 	var statement string
 	switch table {
 	case "tomato":
-		if col == "progress" {
-			// coalesce accepts at least two arguments and return the first non-null value, to avoid sum(progress) is NULL
-			statement = "SELECT COALESCE(SUM(progress), 0) FROM tomato WHERE status in (1,3)"
-		}
-		if col == "timefocused" {
-			statement = "SELECT COALESCE(SUM(timefocused), 0) FROM tomato WHERE 1=1"
+		switch timeslot {
+		case "untiltoday":
+			statement = "SELECT DATE(endTime, 'unixepoch') day, SUM(progress) count FROM tomato WHERE status in (1, 3)"
+		case "untilweek":
+			statement = "SELECT strftime('%Y-%W', endTime, 'unixepoch') week, SUM(progress) count FROM tomato WHERE status in (1,3)"
+		case "untilmonth":
+			statement = "SELECT strftime('%Y%m', endTime, 'unixepoch') month, SUM(progress) count FROM tomato WHERE status in (1,3)"
 		}
 	case "task":
-		statement = "SELECT COALESCE(COUNT(id), 0) FROM task WHERE status = 1"
+		switch timeslot {
+		case "untiltoday":
+			statement = "SELECT DATE(endTime, 'unixepoch') day, COUNT(id) count FROM task WHERE status = 1"
+		case "untilweek":
+			statement = "SELECT strftime('%Y-%W', endTime, 'unixepoch') week, COUNT(id) count FROM task WHERE status = 1"
+		case "untilmonth":
+			statement = "SELECT strftime('%Y%m', endTime, 'unixepoch') month, COUNT(id) count FROM task WHERE status = 1"
+		}
 	}
 	res := _query(statement, timeslot)
 	prec := 1
