@@ -2,11 +2,12 @@ package stats
 
 import (
 	"context"
-	_ "log"
+	_ "fmt"
+	_ "time"
 	"tomato-clock/sqliteopt"
 
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/align"
+	_ "github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/container/grid"
@@ -33,10 +34,13 @@ func inputs() []float64 {
 	return values
 }
 
-func dtmtInputs() []float64 {
-	var values []float64
-	sqliteopt.query
-}
+// func dtmtInputs() []float64 {
+// 	var (
+// 		values []float64
+// 		tmtLC  sqliteopt.TomatoLC
+// 	)
+// 	tmtLC.Query()
+// }
 
 type lCharts struct {
 	dtmt  *linechart.LineChart
@@ -114,65 +118,94 @@ type staticText struct {
 	todaytaskT   *text.Text
 }
 
+const (
+	tamatoTable = "tomato"
+	taskTable   = "task"
+)
+
+const (
+	tomatoColPgs = "progress"
+	tomatoColTf  = "timefocused"
+)
+
+const (
+	allTime    = "all"
+	today      = "today"
+	thisweek   = "thisweek"
+	untilToday = "untiltoday"
+	untilWeek  = "untilweek"
+	untilMonth = "untilmonth"
+)
+
 func newText() (*staticText, error) {
+	var mtc sqliteopt.Metric
+	v0 := mtc.Query(tamatoTable, tomatoColPgs, allTime)
 	alltmtT, err := text.New()
-	err = alltmtT.Write("10.4", text.WriteCellOpts(cell.FgColor(cell.ColorDefault), cell.Bold()))
+	err = alltmtT.Write(" "+v0, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	wcT, err := text.New()
-	err = wcT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	v1 := mtc.Query(tamatoTable, tomatoColPgs, thisweek)
+	wtmtT, err := text.New()
+	err = wtmtT.Write(v1, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	tcT, err := text.New()
-	err = tcT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	v2 := mtc.Query(tamatoTable, tomatoColPgs, today)
+	ttmtT, err := text.New()
+	err = ttmtT.Write(v2, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v3 := mtc.Query(tamatoTable, tomatoColTf, allTime)
 	allftT, err := text.New()
-	err = allftT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = allftT.Write(v3, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v4 := mtc.Query(tamatoTable, tomatoColTf, thisweek)
 	wftT, err := text.New()
-	err = wftT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = wftT.Write(v4, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v5 := mtc.Query(tamatoTable, tomatoColTf, today)
 	tftT, err := text.New()
-	err = tftT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = tftT.Write(v5, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v6 := mtc.Query(taskTable, "", allTime)
 	alltaskT, err := text.New()
-	err = alltaskT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = alltaskT.Write(v6, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v7 := mtc.Query(taskTable, "", thisweek)
 	wtaskT, err := text.New()
-	err = wtaskT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = wtaskT.Write(v7, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v8 := mtc.Query(taskTable, "", today)
 	ttaskT, err := text.New()
-	err = ttaskT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = ttaskT.Write(v8, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
 	return &staticText{
 		alltomatoT:   alltmtT,
-		weektomatoT:  wcT,
-		todaytomatoT: tcT,
+		weektomatoT:  wtmtT,
+		todaytomatoT: ttmtT,
 		allftT:       allftT,
 		weekftT:      wftT,
 		todayftT:     tftT,
@@ -275,48 +308,49 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 			grid.ColWidthPerc(11,
 				grid.Widget(w.t.alltomatoT,
 					container.BorderTitle("总完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light),
-					container.AlignHorizontal(align.HorizontalRight))),
-			grid.ColWidthPerc(11,
+					container.PaddingLeftPercent(3),
+					container.PaddingRightPercent(3))),
+			grid.ColWidthPerc(12,
 				grid.Widget(w.t.weektomatoT,
-					container.BorderTitle("本周完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 本周完成番茄数"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
+			grid.ColWidthPerc(12,
 				grid.Widget(w.t.todaytomatoT,
-					container.BorderTitle("今日完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 今日完成番茄数"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
+			grid.ColWidthPerc(10,
 				grid.Widget(w.t.allftT,
-					container.BorderTitle("总专注时间"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 总专注时间"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
 				grid.Widget(w.t.weekftT,
-					container.BorderTitle("本周专注时间"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 本周专注时间"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
 				grid.Widget(w.t.todayftT,
-					container.BorderTitle("今日专注时间"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 今日专注时间"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
 				grid.Widget(w.t.alltaskT,
-					container.BorderTitle("总完成任务"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 总完成任务"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
 				grid.Widget(w.t.weektaskT,
-					container.BorderTitle("本周完成任务"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 本周完成任务"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
 				grid.Widget(w.t.todaytaskT,
-					container.BorderTitle("今日完成任务"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitle(" 今日完成任务"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 		),
 		grid.RowHeightPerc(10,

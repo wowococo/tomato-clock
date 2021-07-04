@@ -181,13 +181,14 @@ func _query(statement, timeslot string) float64 {
 		err = rows.Scan(&res)
 		hdlerr(err)
 	}
+
 	return res
 }
 
-type tomatoLC string
+type TomatoLC string
 
 // linechart inputs needed to query
-func (tmtLC tomatoLC) Query(table, col, timeslot string) string {
+func (tmtLC TomatoLC) Query(table, col, timeslot string) string {
 	var statement string
 	switch table {
 	case "tomato":
