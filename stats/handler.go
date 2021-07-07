@@ -52,6 +52,7 @@ var tmtLC sqliteopt.TomatoLC
 func dtmtInputs() ([]float64, map[int]string) {
 	var (
 		values []float64
+		dates map[string]int
 	)
 	now := time.Now()
 	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
@@ -72,10 +73,12 @@ func dtmtInputs() ([]float64, map[int]string) {
 	if start.Year() == y {
 		for i := 0; i <= diffdays; i++ {
 			values = append(values, 0)
+			dates[]
 		}
 	}
 
 	v := tmtLC.Query(tamatoTable, "", untilToday)
+	
 
 	return values, XLabels
 }
