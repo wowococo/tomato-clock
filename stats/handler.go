@@ -3,6 +3,8 @@ package stats
 import (
 	"context"
 	_ "log"
+	"termdash/container/grid"
+	"termdash/widgets/button"
 	_ "tomato-clock/sqliteopt"
 
 	"github.com/mum4k/termdash"
@@ -18,10 +20,21 @@ import (
 	"github.com/mum4k/termdash/widgets/text"
 )
 
+type layoutType int
+
+const (
+	layoutdtomato layoutType = iota
+	layoutwtomato 
+	layoutmtomato
+	layoutdtask
+	layoutwtask
+	layoutmtask
+)
+
 type widgets struct {
 	lc     *linechart.LineChart
 	t      *staticText
-	button *button.Button
+	button *layoutButtons
 }
 
 func inputs() []float64 {
@@ -126,6 +139,90 @@ func newText() (*staticText, error) {
 		weektaskT:   wtaskT,
 		todaytaskT:  ttaskT,
 	}, nil
+}
+
+type layoutButtons struct {
+	dtmtB  *button.Button   // number of tomatoes per day
+	wtmtB  *button.Button   // number of tomatoes per week
+	mtmtB  *button.Button   // monthly tomato count
+	dtaskB *button.Button  // number of tasks per day
+	wtaskB *button.Button
+	mtaskB *button.Button
+}
+
+func newLayoutButtons() {
+	button.New("每日番茄曲线", func() {
+		return setLayout()
+	})
+}
+
+func setLayout(w widgets, layout layoutType) {
+	var elements = []grid.Element{
+		grid.RowHeightPerc(20,
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.allclockT,
+					container.BorderTitle("总完成番茄数"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light),
+					container.AlignHorizontal(align.HorizontalRight))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("本周完成番茄数"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("今日完成番茄数"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("总专注时间"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("本周专注时间"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("今日专注时间"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("总完成任务"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("本周完成任务"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(11,
+				grid.Widget(w.t.weekclockT,
+					container.BorderTitle("今日完成任务"),
+					container.BorderColor(cell.ColorCyan),
+					container.Border(linestyle.Light))),
+		),
+		grid.RowHeightPerc(5, 
+			grid.ColWidthPerc(33, grid.Widget(w.button.dtmtB),
+			grid.ColWidthPerc(33, grid.Widget(w.button.wtmtB),
+			grid.ColWidthPerc(33, grid.Widget(w.button.mtmtB))),
+		),
+		grid.RowHeightPerc(5, 
+			grid.ColWidthPerc(33, grid.Widget(w.button.dtaskB),
+			grid.ColWidthPerc(33, grid.Widget(w.button.wtaskB),
+			grid.ColWidthPerc(33, grid.Widget(w.button.mtaskB))),
+		),
+	}
+
+	switch layout {
+	case layoutdtomato:
+
+	}
+
 }
 
 func newWidgets() *widgets {
