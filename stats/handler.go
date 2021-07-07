@@ -2,13 +2,13 @@ package stats
 
 import (
 	"context"
-	_ "log"
-	"termdash/container/grid"
-	"termdash/widgets/button"
-	_ "tomato-clock/sqliteopt"
+	"fmt"
+	_ "fmt"
+	"time"
+	"tomato-clock/sqliteopt"
 
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/align"
+	_ "github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/container/grid"
@@ -32,7 +32,7 @@ const (
 )
 
 type widgets struct {
-	lc     *linechart.LineChart
+	lc     *lCharts
 	t      *staticText
 	button *layoutButtons
 }
@@ -46,193 +46,413 @@ func inputs() []float64 {
 	return values
 }
 
-func newLineChart() (*linechart.LineChart, error) {
-	lc, err := linechart.New(
+var tmtLC sqliteopt.TomatoLC
+
+// daily tomato linechart
+func dtmtInputs() ([]float64, map[int]string) {
+	var (
+		values []float64
+	)
+	now := time.Now()
+	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+	start := time.Date(y, M-1, d, 0, 0, 0, 0, location)
+	end := time.Date(y, M, d, 0, 0, 0, 0, location)
+	diff := end.Sub(start)
+	diffdays := int(diff.Hours() / 24)
+
+	midays := diffdays / 2
+	mid := time.Date(y, M-1, d+midays, 0, 0, 0, 0, location)
+
+	var XLabels = map[int]string{
+		0:        fmt.Sprintf("%v月%v日", start.Month(), start.Day()),
+		midays:   fmt.Sprintf("%v月%v日", mid.Month(), mid.Day()),
+		diffdays: fmt.Sprintf("%v月%v日", end.Month(), end.Day()),
+	}
+
+	if start.Year() == y {
+		for i := 0; i <= diffdays; i++ {
+			values = append(values, 0)
+		}
+	}
+
+	v := tmtLC.Query(tamatoTable, "", untilToday)
+
+	return values, XLabels
+}
+
+type lCharts struct {
+	dtmt  *linechart.LineChart
+	wtmt  *linechart.LineChart
+	mtmt  *linechart.LineChart
+	dtask *linechart.LineChart
+	wtask *linechart.LineChart
+	mtask *linechart.LineChart
+}
+
+func newLineCharts() (*lCharts, error) {
+	opts := []linechart.Option{
 		linechart.AxesCellOpts(cell.FgColor(cell.ColorDefault)),
 		linechart.XLabelCellOpts(cell.FgColor(cell.ColorBlue)),
 		linechart.YLabelCellOpts(cell.FgColor(cell.ColorFuchsia)),
-	)
-	hdlerr(err)
+	}
+	dtmtLC, err := linechart.New(opts...)
+	if err != nil {
+		return nil, err
+	}
 
 	values := inputs()
 	labels := map[int]string{}
-	err = lc.Series("weektomato", values, linechart.SeriesXLabels(labels))
-	return lc, err
+	err = dtmtLC.Series("daytomato", values, linechart.SeriesXLabels(labels))
 
+	wtmtLC, err := linechart.New(opts...)
+	if err != nil {
+		return nil, err
+	}
+	err = wtmtLC.Series("weektomato", values, linechart.SeriesXLabels(labels))
+
+	mtmtLC, err := linechart.New(opts...)
+	if err != nil {
+		return nil, err
+	}
+	err = mtmtLC.Series("monthtomato", values, linechart.SeriesXLabels(labels))
+
+	dtaskLC, err := linechart.New(opts...)
+	if err != nil {
+		return nil, err
+	}
+	err = dtaskLC.Series("daytask", values, linechart.SeriesXLabels(labels))
+
+	wtaskLC, err := linechart.New(opts...)
+	if err != nil {
+		return nil, err
+	}
+	err = wtaskLC.Series("weektask", values, linechart.SeriesXLabels(labels))
+
+	mtaskLC, err := linechart.New(opts...)
+	if err != nil {
+		return nil, err
+	}
+	err = mtaskLC.Series("monthtask", values, linechart.SeriesXLabels(labels))
+
+	return &lCharts{
+		dtmt:  dtmtLC,
+		wtmt:  wtmtLC,
+		mtmt:  mtmtLC,
+		dtask: dtaskLC,
+		wtask: wtaskLC,
+		mtask: mtaskLC,
+	}, nil
 }
 
 type staticText struct {
-	allclockT   *text.Text
-	weekclockT  *text.Text
-	todayclockT *text.Text
-	allftT      *text.Text
-	weekftT     *text.Text
-	todayftT    *text.Text
-	alltaskT    *text.Text
-	weektaskT   *text.Text
-	todaytaskT  *text.Text
+	alltomatoT   *text.Text
+	weektomatoT  *text.Text
+	todaytomatoT *text.Text
+	allftT       *text.Text
+	weekftT      *text.Text
+	todayftT     *text.Text
+	alltaskT     *text.Text
+	weektaskT    *text.Text
+	todaytaskT   *text.Text
 }
 
+const (
+	tamatoTable = "tomato"
+	taskTable   = "task"
+)
+
+const (
+	tomatoColPgs = "progress"
+	tomatoColTf  = "timefocused"
+)
+
+const (
+	allTime    = "all"
+	today      = "today"
+	thisweek   = "thisweek"
+	untilToday = "untiltoday"
+	untilWeek  = "untilweek"
+	untilMonth = "untilmonth"
+)
+
 func newText() (*staticText, error) {
-	allcT, err := text.New()
-	err = allcT.Write("10.4", text.WriteCellOpts(cell.FgColor(cell.ColorDefault), cell.Bold()))
+	var mtc sqliteopt.Metric
+	v0 := mtc.Query(tamatoTable, tomatoColPgs, allTime)
+	alltmtT, err := text.New()
+	err = alltmtT.Write(" "+v0, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	wcT, err := text.New()
-	err = wcT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	v1 := mtc.Query(tamatoTable, tomatoColPgs, thisweek)
+	wtmtT, err := text.New()
+	err = wtmtT.Write(v1, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	tcT, err := text.New()
-	err = tcT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	v2 := mtc.Query(tamatoTable, tomatoColPgs, today)
+	ttmtT, err := text.New()
+	err = ttmtT.Write(v2, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v3 := mtc.Query(tamatoTable, tomatoColTf, allTime)
 	allftT, err := text.New()
-	err = allftT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = allftT.Write(v3, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v4 := mtc.Query(tamatoTable, tomatoColTf, thisweek)
 	wftT, err := text.New()
-	err = wftT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = wftT.Write(v4, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v5 := mtc.Query(tamatoTable, tomatoColTf, today)
 	tftT, err := text.New()
-	err = tftT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = tftT.Write(v5, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v6 := mtc.Query(taskTable, "", allTime)
 	alltaskT, err := text.New()
-	err = alltaskT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = alltaskT.Write(v6, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v7 := mtc.Query(taskTable, "", thisweek)
 	wtaskT, err := text.New()
-	err = wtaskT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = wtaskT.Write(v7, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
+	v8 := mtc.Query(taskTable, "", today)
 	ttaskT, err := text.New()
-	err = ttaskT.Write("3", text.WriteCellOpts(cell.FgColor(cell.ColorDefault)))
+	err = ttaskT.Write(v8, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
 	return &staticText{
-		allclockT:   allcT,
-		weekclockT:  wcT,
-		todayclockT: tcT,
-		allftT:      allftT,
-		weekftT:     wftT,
-		todayftT:    tftT,
-		alltaskT:    alltaskT,
-		weektaskT:   wtaskT,
-		todaytaskT:  ttaskT,
+		alltomatoT:   alltmtT,
+		weektomatoT:  wtmtT,
+		todaytomatoT: ttmtT,
+		allftT:       allftT,
+		weekftT:      wftT,
+		todayftT:     tftT,
+		alltaskT:     alltaskT,
+		weektaskT:    wtaskT,
+		todaytaskT:   ttaskT,
 	}, nil
 }
 
 type layoutButtons struct {
-	dtmtB  *button.Button   // number of tomatoes per day
-	wtmtB  *button.Button   // number of tomatoes per week
-	mtmtB  *button.Button   // monthly tomato count
-	dtaskB *button.Button  // number of tasks per day
-	wtaskB *button.Button
-	mtaskB *button.Button
+	dtomato *button.Button
+	wtomato *button.Button
+	mtomato *button.Button
+	dtask   *button.Button
+	wtask   *button.Button
+	mtask   *button.Button
 }
 
-func newLayoutButtons() {
-	button.New("每日番茄曲线", func() {
-		return setLayout()
-	})
+func newLayoutButtons(c *container.Container, w *widgets) (*layoutButtons, error) {
+	opts := []button.Option{
+		button.Height(1),
+		button.WidthFor("每日番茄曲线"),
+	}
+	dtmt, err := button.New("每日番茄曲线", func() error {
+		return setLayout(c, w, layoutdtomato)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	wtmt, err := button.New("每周番茄曲线", func() error {
+		return setLayout(c, w, layoutwtomato)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	mtmt, err := button.New("每月番茄曲线", func() error {
+		return setLayout(c, w, layoutmtomato)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	dtask, err := button.New("每日任务曲线", func() error {
+		return setLayout(c, w, layoutdtask)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	wtask, err := button.New("每周任务曲线", func() error {
+		return setLayout(c, w, layoutwtask)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	mtask, err := button.New("每月任务曲线", func() error {
+		return setLayout(c, w, layoutmtask)
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &layoutButtons{
+		dtomato: dtmt,
+		wtomato: wtmt,
+		mtomato: mtmt,
+		dtask:   dtask,
+		wtask:   wtask,
+		mtask:   mtask,
+	}, nil
 }
 
-func setLayout(w widgets, layout layoutType) {
-	var elements = []grid.Element{
-		grid.RowHeightPerc(20,
+type layoutType int
+
+const (
+	layoutdtomato layoutType = iota
+	layoutwtomato
+	layoutmtomato
+	layoutdtask
+	layoutwtask
+	layoutmtask
+)
+
+func setLayout(c *container.Container, w *widgets, lt layoutType) error {
+	gridOpts, err := gridLayout(w, lt)
+	if err != nil {
+		return err
+	}
+
+	return c.Update(rootID, gridOpts...)
+
+}
+
+func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
+	upcols := []grid.Element{
+		grid.RowHeightPerc(10,
 			grid.ColWidthPerc(11,
-				grid.Widget(w.t.allclockT,
+				grid.Widget(w.t.alltomatoT,
 					container.BorderTitle("总完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light),
-					container.AlignHorizontal(align.HorizontalRight))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("本周完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
+					container.PaddingLeftPercent(3),
+					container.PaddingRightPercent(3))),
+			grid.ColWidthPerc(12,
+				grid.Widget(w.t.weektomatoT,
+					container.BorderTitle(" 本周完成番茄数"),
+					container.BorderTitleAlignCenter(),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(12,
+				grid.Widget(w.t.todaytomatoT,
+					container.BorderTitle(" 今日完成番茄数"),
+					container.BorderTitleAlignCenter(),
+					container.Border(linestyle.Light))),
+			grid.ColWidthPerc(10,
+				grid.Widget(w.t.allftT,
+					container.BorderTitle(" 总专注时间"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("今日完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
+				grid.Widget(w.t.weekftT,
+					container.BorderTitle(" 本周专注时间"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("总专注时间"),
-					container.BorderColor(cell.ColorCyan),
+				grid.Widget(w.t.todayftT,
+					container.BorderTitle(" 今日专注时间"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("本周专注时间"),
-					container.BorderColor(cell.ColorCyan),
+				grid.Widget(w.t.alltaskT,
+					container.BorderTitle(" 总完成任务"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("今日专注时间"),
-					container.BorderColor(cell.ColorCyan),
+				grid.Widget(w.t.weektaskT,
+					container.BorderTitle(" 本周完成任务"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("总完成任务"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("本周完成任务"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("今日完成任务"),
-					container.BorderColor(cell.ColorCyan),
+				grid.Widget(w.t.todaytaskT,
+					container.BorderTitle(" 今日完成任务"),
+					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
 		),
-		grid.RowHeightPerc(5, 
-			grid.ColWidthPerc(33, grid.Widget(w.button.dtmtB),
-			grid.ColWidthPerc(33, grid.Widget(w.button.wtmtB),
-			grid.ColWidthPerc(33, grid.Widget(w.button.mtmtB))),
+		grid.RowHeightPerc(10,
+			grid.ColWidthPerc(33, grid.Widget(w.button.dtomato)),
+			grid.ColWidthPerc(33, grid.Widget(w.button.wtomato)),
+			grid.ColWidthPerc(33, grid.Widget(w.button.mtomato)),
 		),
-		grid.RowHeightPerc(5, 
-			grid.ColWidthPerc(33, grid.Widget(w.button.dtaskB),
-			grid.ColWidthPerc(33, grid.Widget(w.button.wtaskB),
-			grid.ColWidthPerc(33, grid.Widget(w.button.mtaskB))),
+		grid.RowHeightPerc(10,
+			grid.ColWidthPerc(33, grid.Widget(w.button.dtask)),
+			grid.ColWidthPerc(33, grid.Widget(w.button.wtask)),
+			grid.ColWidthPerc(33, grid.Widget(w.button.mtask)),
 		),
 	}
-
-	switch layout {
+	switch lt {
 	case layoutdtomato:
+		upcols = append(upcols,
+			grid.RowHeightPerc(60,
+				grid.Widget(w.lc.dtmt)))
+	case layoutwtomato:
+		upcols = append(upcols,
+			grid.RowHeightPerc(60,
+				grid.Widget(w.lc.wtmt)))
+	case layoutmtomato:
+		upcols = append(upcols,
+			grid.RowHeightPerc(60,
+				grid.Widget(w.lc.mtmt)))
+	case layoutdtask:
+		upcols = append(upcols,
+			grid.RowHeightPerc(60,
+				grid.Widget(w.lc.dtask)))
+	case layoutwtask:
+		upcols = append(upcols,
+			grid.RowHeightPerc(60,
+				grid.Widget(w.lc.wtask)))
+	case layoutmtask:
+		upcols = append(upcols,
+			grid.RowHeightPerc(60,
+				grid.Widget(w.lc.mtmt)))
 
 	}
-
+	builder := grid.New()
+	builder.Add(upcols...)
+	gridOpts, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+	return gridOpts, nil
 }
 
-func newWidgets() *widgets {
-	lc, err := newLineChart()
+func newWidgets(c *container.Container) (*widgets, error) {
+	lc, err := newLineCharts()
+	if err != nil {
+		return nil, err
+	}
+
 	t, err := newText()
-	hdlerr(err)
+	if err != nil {
+		return nil, err
+	}
+
 	return &widgets{
 		lc: lc,
 		t:  t,
-	}
+	}, nil
 }
 
 const rootID = "root"
@@ -247,69 +467,19 @@ func Draw() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	w := newWidgets()
+	w, err := newWidgets(c)
+	hdlerr(err)
 
-	builder := grid.New()
-	builder.Add(
-		grid.RowHeightPerc(20,
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.allclockT,
-					container.BorderTitle("总完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light),
-					container.AlignHorizontal(align.HorizontalRight))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("本周完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("今日完成番茄数"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("总专注时间"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("本周专注时间"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("今日专注时间"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("总完成任务"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("本周完成任务"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
-				grid.Widget(w.t.weekclockT,
-					container.BorderTitle("今日完成任务"),
-					container.BorderColor(cell.ColorCyan),
-					container.Border(linestyle.Light))),
-		),
+	lb, err := newLayoutButtons(c, w)
+	hdlerr(err)
 
-		grid.RowHeightPerc(70,
-			grid.Widget(w.lc,
-				container.BorderColor(cell.ColorCyan),
-				container.BorderTitle("番茄曲线(周)"))))
+	w.button = lb
 
-	gridOpts, err := builder.Build()
+	gridOpts, err := gridLayout(w, layoutdtomato)
 	hdlerr(err)
 
 	err = c.Update(rootID, gridOpts...)
-	hdlerr(ctx.Err())
+	hdlerr(err)
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {
