@@ -60,9 +60,9 @@ func createtb() {
 
 func insert(statement string, args ...interface{}) int64 {
 	stmt, err := db.Prepare(statement)
-	defer stmt.Close()
 	hdlerr(err)
-
+	defer stmt.Close()
+	
 	res, err := stmt.Exec(args...)
 	hdlerr(err)
 
@@ -107,7 +107,8 @@ func updateTomato(args ...interface{}) int64 {
 type Metric string
 
 // metrics needed to query
-func (mtc Metric) Query(table, col, timeslot string) string {
+// func (mtc Metric) Query(table, col, timeslot string) string {
+func Query(table, col, timeslot string) string {
 	var statement string
 	switch table {
 	case "tomato":
@@ -121,7 +122,11 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 	case "task":
 		statement = "SELECT COALESCE(COUNT(id), 0) FROM task WHERE status = 1"
 	}
-	res := _query(statement, timeslot)
+	res, ok := _query(statement, timeslot).(float64)
+	if !ok {
+		// optimize
+		return ""
+	}
 	prec := 1
 	switch table {
 	case "task":
@@ -134,7 +139,7 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 	return strconv.FormatFloat(res, 'f', prec, 64)
 }
 
-func _query(statement, timeslot string) float64 {
+func _query(statement, timeslot string) interface{} {
 	now := time.Now()
 	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
 	switch timeslot {
@@ -174,8 +179,8 @@ func _query(statement, timeslot string) float64 {
 	}
 
 	rows, err := db.Query(statement)
-	defer rows.Close()
 	hdlerr(err)
+	defer rows.Close()
 	var res float64
 	for rows.Next() {
 		err = rows.Scan(&res)
@@ -188,7 +193,8 @@ func _query(statement, timeslot string) float64 {
 type TomatoLC string
 
 // linechart inputs needed to query
-func (tmtLC TomatoLC) Query(table, col, timeslot string) string {
+// func (tmtLC TomatoLC) Query(table, col, timeslot string) interface{} {
+func sQuery(table, col, timeslot string) interface{} {
 	var statement string
 	switch table {
 	case "tomato":
@@ -211,16 +217,8 @@ func (tmtLC TomatoLC) Query(table, col, timeslot string) string {
 		}
 	}
 	res := _query(statement, timeslot)
-	prec := 1
-	switch table {
-	case "task":
-		prec = 0
-	case "tomato":
-		if col == "timefocused" {
-			res = res / (60 * 60)
-		}
-	}
-	return strconv.FormatFloat(res, 'f', prec, 64)
+	fmt.Println(res)
+	return res
 }
 
 func hdlerr(err error) {
