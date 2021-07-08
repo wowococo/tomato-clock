@@ -23,7 +23,7 @@ type layoutType int
 
 const (
 	layoutdtomato layoutType = iota
-	layoutwtomato 
+	layoutwtomato
 	layoutmtomato
 	layoutdtask
 	layoutwtask
@@ -51,7 +51,7 @@ var tmtLC sqliteopt.TomatoLC
 func dtmtInputs() ([]float64, map[int]string) {
 	var (
 		values []float64
-		dates map[string]int
+		dates  = make(map[string]int)
 	)
 	now := time.Now()
 	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
@@ -77,12 +77,13 @@ func dtmtInputs() ([]float64, map[int]string) {
 			date := fmt.Sprintf("%v月%v日", M, d)
 			values = append(values, 0)
 			dates[date] = i
-			et = et.AddDate(0, 0, -1)			
+			et = et.AddDate(0, 0, -1)
+		}
 	}
 
 	v := tmtLC.Query(tamatoTable, "", untilToday)
-	// for 	
-	
+	fmt.Println(v)
+	time.Sleep(3 * time.Second)
 
 	return values, XLabels
 }
@@ -107,14 +108,14 @@ func newLineCharts() (*lCharts, error) {
 		return nil, err
 	}
 
-	values := inputs()
-	labels := map[int]string{}
-	err = dtmtLC.Series("daytomato", values, linechart.SeriesXLabels(labels))
+	values, XLabels := dtmtInputs()
+	err = dtmtLC.Series("daytomato", values, linechart.SeriesXLabels(XLabels))
 
 	wtmtLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
+	var labels map[int]string
 	err = wtmtLC.Series("weektomato", values, linechart.SeriesXLabels(labels))
 
 	mtmtLC, err := linechart.New(opts...)
@@ -183,67 +184,66 @@ const (
 )
 
 func newText() (*staticText, error) {
-	// var mtc sqliteopt.Metric
-	// v0 := sqliteopt.Query(tamatoTable, tomatoColPgs, allTime)
-	v0 := sqliteopt.Query(tamatoTable, tomatoColPgs, allTime)
+	var mtc sqliteopt.Metric
+	v0 := mtc.Query(tamatoTable, tomatoColPgs, allTime)
 	alltmtT, err := text.New()
-	err = alltmtT.Write(" "+v0, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = alltmtT.Write("    "+v0, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v1 := sqliteopt.Query(tamatoTable, tomatoColPgs, thisweek)
+	v1 := mtc.Query(tamatoTable, tomatoColPgs, thisweek)
 	wtmtT, err := text.New()
-	err = wtmtT.Write(v1, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = wtmtT.Write("    "+v1, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v2 := sqliteopt.Query(tamatoTable, tomatoColPgs, today)
+	v2 := mtc.Query(tamatoTable, tomatoColPgs, today)
 	ttmtT, err := text.New()
-	err = ttmtT.Write(v2, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = ttmtT.Write("    "+v2, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v3 := sqliteopt.Query(tamatoTable, tomatoColTf, allTime)
+	v3 := mtc.Query(tamatoTable, tomatoColTf, allTime)
 	allftT, err := text.New()
-	err = allftT.Write(v3, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = allftT.Write("    "+v3, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v4 := sqliteopt.Query(tamatoTable, tomatoColTf, thisweek)
+	v4 := mtc.Query(tamatoTable, tomatoColTf, thisweek)
 	wftT, err := text.New()
-	err = wftT.Write(v4, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = wftT.Write("    "+v4, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v5 := sqliteopt.Query(tamatoTable, tomatoColTf, today)
+	v5 := mtc.Query(tamatoTable, tomatoColTf, today)
 	tftT, err := text.New()
-	err = tftT.Write(v5, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = tftT.Write("    "+v5, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v6 := sqliteopt.Query(taskTable, "", allTime)
+	v6 := mtc.Query(taskTable, "", allTime)
 	alltaskT, err := text.New()
-	err = alltaskT.Write(v6, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = alltaskT.Write("    "+v6, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v7 := sqliteopt.Query(taskTable, "", thisweek)
+	v7 := mtc.Query(taskTable, "", thisweek)
 	wtaskT, err := text.New()
-	err = wtaskT.Write(v7, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = wtaskT.Write("    "+v7, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v8 := sqliteopt.Query(taskTable, "", today)
+	v8 := mtc.Query(taskTable, "", today)
 	ttaskT, err := text.New()
-	err = ttaskT.Write(v8, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+	err = ttaskT.Write("    "+v8, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
@@ -326,17 +326,6 @@ func newLayoutButtons(c *container.Container, w *widgets) (*layoutButtons, error
 		mtask:   mtask,
 	}, nil
 }
-
-type layoutType int
-
-const (
-	layoutdtomato layoutType = iota
-	layoutwtomato
-	layoutmtomato
-	layoutdtask
-	layoutwtask
-	layoutmtask
-)
 
 func setLayout(c *container.Container, w *widgets, lt layoutType) error {
 	gridOpts, err := gridLayout(w, lt)
