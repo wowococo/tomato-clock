@@ -64,7 +64,7 @@ func dtmtInputs() ([]float64, map[int]string) {
 		}
 	}
 
-	v := tmtLC.Query(tamatoTable, "", untilToday)
+	// v := tmtLC.Query(tamatoTable, "", untilToday)
 
 	return values, XLabels
 }
