@@ -3,7 +3,6 @@ package stats
 import (
 	"context"
 	"fmt"
-	_ "fmt"
 	"time"
 	"tomato-clock/sqliteopt"
 
@@ -71,13 +70,18 @@ func dtmtInputs() ([]float64, map[int]string) {
 	}
 
 	if start.Year() == y {
+		et := end
 		for i := 0; i <= diffdays; i++ {
+			y, M, d = et.Date()
+			// date init in every loop?
+			date := fmt.Sprintf("%v月%v日", M, d)
 			values = append(values, 0)
-			dates[]
-		}
+			dates[date] = i
+			et = et.AddDate(0, 0, -1)			
 	}
 
 	v := tmtLC.Query(tamatoTable, "", untilToday)
+	// for 	
 	
 
 	return values, XLabels
@@ -179,64 +183,65 @@ const (
 )
 
 func newText() (*staticText, error) {
-	var mtc sqliteopt.Metric
-	v0 := mtc.Query(tamatoTable, tomatoColPgs, allTime)
+	// var mtc sqliteopt.Metric
+	// v0 := sqliteopt.Query(tamatoTable, tomatoColPgs, allTime)
+	v0 := sqliteopt.Query(tamatoTable, tomatoColPgs, allTime)
 	alltmtT, err := text.New()
 	err = alltmtT.Write(" "+v0, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v1 := mtc.Query(tamatoTable, tomatoColPgs, thisweek)
+	v1 := sqliteopt.Query(tamatoTable, tomatoColPgs, thisweek)
 	wtmtT, err := text.New()
 	err = wtmtT.Write(v1, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v2 := mtc.Query(tamatoTable, tomatoColPgs, today)
+	v2 := sqliteopt.Query(tamatoTable, tomatoColPgs, today)
 	ttmtT, err := text.New()
 	err = ttmtT.Write(v2, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v3 := mtc.Query(tamatoTable, tomatoColTf, allTime)
+	v3 := sqliteopt.Query(tamatoTable, tomatoColTf, allTime)
 	allftT, err := text.New()
 	err = allftT.Write(v3, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v4 := mtc.Query(tamatoTable, tomatoColTf, thisweek)
+	v4 := sqliteopt.Query(tamatoTable, tomatoColTf, thisweek)
 	wftT, err := text.New()
 	err = wftT.Write(v4, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v5 := mtc.Query(tamatoTable, tomatoColTf, today)
+	v5 := sqliteopt.Query(tamatoTable, tomatoColTf, today)
 	tftT, err := text.New()
 	err = tftT.Write(v5, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v6 := mtc.Query(taskTable, "", allTime)
+	v6 := sqliteopt.Query(taskTable, "", allTime)
 	alltaskT, err := text.New()
 	err = alltaskT.Write(v6, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v7 := mtc.Query(taskTable, "", thisweek)
+	v7 := sqliteopt.Query(taskTable, "", thisweek)
 	wtaskT, err := text.New()
 	err = wtaskT.Write(v7, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v8 := mtc.Query(taskTable, "", today)
+	v8 := sqliteopt.Query(taskTable, "", today)
 	ttaskT, err := text.New()
 	err = ttaskT.Write(v8, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
