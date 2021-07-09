@@ -12,7 +12,7 @@ import (
 var db *sql.DB
 
 const (
-	dbName = "TomatoClock"
+	dbName = "TomatoClock.db"
 )
 
 func init() {
@@ -21,7 +21,8 @@ func init() {
 }
 
 func createdb() *sql.DB {
-	db, err := sql.Open("sqlite3", "./TomatoClock.db")
+	dataSrc := fmt.Sprintf("./%s", dbName)
+	db, err := sql.Open("sqlite3", dataSrc)
 	hdlerr(err)
 	return db
 }
@@ -104,6 +105,10 @@ func updateTomato(args ...interface{}) int64 {
 	return affect
 }
 
+const (
+	lc = "lineChart"
+	txt = "text"
+)
 type Metric string
 
 // metrics needed to query
@@ -121,7 +126,7 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 	case "task":
 		statement = "SELECT COALESCE(COUNT(id), 0) FROM task WHERE status = 1"
 	}
-	res, ok := _query(statement, timeslot).(float64)
+	res, ok := _query(txt, statement, timeslot).(float64)
 	if !ok {
 		// optimize
 		return ""
@@ -136,57 +141,6 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 		}
 	}
 	return strconv.FormatFloat(res, 'f', prec, 64)
-}
-
-func _query(statement, timeslot string) interface{} {
-	now := time.Now()
-	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
-	switch timeslot {
-	case "thisweek":
-		weekday := now.Weekday()
-		st := now.AddDate(0, 0, int(time.Monday-weekday))
-		// Sunday as the last day
-		et := now.AddDate(0, 0, int(time.Sunday+7-weekday))
-		st = time.Date(st.Year(), st.Month(), st.Day(), 0, 0, 0, 0, st.Location())
-		et = time.Date(et.Year(), et.Month(), et.Day(), 24, 0, 0, 0, et.Location())
-
-		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
-	case "today":
-		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
-		st := time.Date(y, M, d, 0, 0, 0, 0, location)
-		et := time.Date(y, M, d+1, 0, 0, 0, 0, location)
-		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
-	default:
-		statement += ";"
-	case "untiltoday":
-		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
-		st := time.Date(y, M, d, 0, 0, 0, 0, location)
-		et := now
-		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY day;", st.Unix(), et.Unix())
-	case "untilweek":
-		weekday := now.Weekday()
-		mondate := now.AddDate(0, 0, int(time.Monday-weekday))
-		y, M, d, location := mondate.Year(), mondate.Month(), mondate.Day(), mondate.Location()
-		st := time.Date(y, M-6, d, 0, 0, 0, 0, location)
-		et := now
-		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY week;", st.Unix(), et.Unix())
-	case "untilmonth":
-		// y, M, location := now.Year(), now.Month(), now.Location()
-		st := time.Date(y-1, M, 1, 0, 0, 0, 0, location)
-		et := now
-		statement += fmt.Sprint(" and endTime >= st and endTime <= now GROUP BY month;", st.Unix(), et.Unix())
-	}
-
-	rows, err := db.Query(statement)
-	hdlerr(err)
-	defer rows.Close()
-	var res float64
-	for rows.Next() {
-		err = rows.Scan(&res)
-		hdlerr(err)
-	}
-
-	return res
 }
 
 type TomatoLC string
@@ -214,10 +168,79 @@ func (tmtLC TomatoLC) Query(table, col, timeslot string) interface{} {
 			statement = "SELECT strftime('%Y%m', endTime, 'unixepoch') month, COUNT(id) count FROM task WHERE status = 1"
 		}
 	}
-	res := _query(statement, timeslot)
-	fmt.Println(res)
-	time.Sleep(3 * time.Second)
+
+	res := _query(lc, statement, timeslot)
 	return res
+}
+
+func _query(chartType, statement, timeslot string) interface{} {
+	now := time.Now()
+	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+	switch timeslot {
+	default:
+		statement += ";"
+	case "thisweek":
+		weekday := now.Weekday()
+		st := now.AddDate(0, 0, int(time.Monday-weekday))
+		// Sunday as the last day
+		et := now.AddDate(0, 0, int(time.Sunday+7-weekday))
+		st = time.Date(st.Year(), st.Month(), st.Day(), 0, 0, 0, 0, st.Location())
+		et = time.Date(et.Year(), et.Month(), et.Day(), 24, 0, 0, 0, et.Location())
+
+		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
+	case "today":
+		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+		st := time.Date(y, M, d, 0, 0, 0, 0, location)
+		et := time.Date(y, M, d+1, 0, 0, 0, 0, location)
+		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())	
+	case "untiltoday":
+		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
+		st := time.Date(y, M, d, 0, 0, 0, 0, location)
+		et := now
+		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY day;", st.Unix(), et.Unix())
+	case "untilweek":
+		weekday := now.Weekday()
+		mondate := now.AddDate(0, 0, int(time.Monday-weekday))
+		y, M, d, location := mondate.Year(), mondate.Month(), mondate.Day(), mondate.Location()
+		st := time.Date(y, M-6, d, 0, 0, 0, 0, location)
+		et := now
+		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY week;", st.Unix(), et.Unix())
+	case "untilmonth":
+		// y, M, location := now.Year(), now.Month(), now.Location()
+		st := time.Date(y-1, M, 1, 0, 0, 0, 0, location)
+		et := now
+		statement += fmt.Sprint(" and endTime >= st and endTime <= now GROUP BY month;", st.Unix(), et.Unix())
+	}
+
+	rows, err := db.Query(statement)
+	hdlerr(err)
+	defer rows.Close()
+	var ( 
+		res float64
+		dt string
+		count float64
+		dtCount = make(map[string]float64)
+	)
+	switch chartType {
+	case txt:
+		for rows.Next() {
+			err = rows.Scan(&res)
+			hdlerr(err)
+		}
+		return res
+	case lc:
+		for rows.Next() {
+			err = rows.Scan(&dt, &count)
+			hdlerr(err)
+			fmt.Println(dt, count)
+			dtCount[dt] = count
+			fmt.Println(dtCount)
+			time.Sleep(5 * time.Second)
+		}
+			return  dtCount
+	default:
+		return nil
+	}
 }
 
 func hdlerr(err error) {

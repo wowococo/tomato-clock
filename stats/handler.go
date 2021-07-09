@@ -72,7 +72,7 @@ func dtmtInputs() ([]float64, map[int]string) {
 	if start.Year() == y {
 		et := end
 		for i := 0; i <= diffdays; i++ {
-			y, M, d = et.Date()
+			_, M, d = et.Date()
 			// date init in every loop?
 			date := fmt.Sprintf("%v月%v日", M, d)
 			values = append(values, 0)
@@ -81,10 +81,16 @@ func dtmtInputs() ([]float64, map[int]string) {
 		}
 	}
 
-	v := tmtLC.Query(tamatoTable, "", untilToday)
-	fmt.Println(v)
-	time.Sleep(3 * time.Second)
-
+	res := tmtLC.Query(tamatoTable, "", untilToday).(map[string]float64)
+	fmt.Println(res)
+	time.Sleep(5 * time.Second)
+	for k, v := range res {
+		if i, ok := dates[k]; ok {
+			values[i] = v
+		}
+	}
+	fmt.Println(values)
+	time.Sleep(5 * time.Second)
 	return values, XLabels
 }
 
@@ -110,6 +116,9 @@ func newLineCharts() (*lCharts, error) {
 
 	values, XLabels := dtmtInputs()
 	err = dtmtLC.Series("daytomato", values, linechart.SeriesXLabels(XLabels))
+	if err != nil {
+		return nil, err
+	}
 
 	wtmtLC, err := linechart.New(opts...)
 	if err != nil {
