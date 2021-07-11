@@ -3,6 +3,7 @@ package stats
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 	"tomato-clock/sqliteopt"
 
@@ -56,7 +57,8 @@ func dtmtInputs() ([]float64, map[int]string) {
 	now := time.Now()
 	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
 	start := time.Date(y, M-1, d, 0, 0, 0, 0, location)
-	end := time.Date(y, M, d, 0, 0, 0, 0, location)
+	// end := time.Date(y, M, d, 0, 0, 0, 0, location)
+	end := now
 	diff := end.Sub(start)
 	diffdays := int(diff.Hours() / 24)
 
@@ -65,25 +67,21 @@ func dtmtInputs() ([]float64, map[int]string) {
 
 	var XLabels = map[int]string{
 		0:        fmt.Sprintf("%v月%v日", start.Month(), start.Day()),
+		1:        " ",
 		midays:   fmt.Sprintf("%v月%v日", mid.Month(), mid.Day()),
 		diffdays: fmt.Sprintf("%v月%v日", end.Month(), end.Day()),
 	}
 
-	if start.Year() == y {
-		et := end
-		for i := 0; i <= diffdays; i++ {
-			_, M, d = et.Date()
-			// date init in every loop?
-			date := fmt.Sprintf("%v月%v日", M, d)
-			values = append(values, 0)
-			dates[date] = i
-			et = et.AddDate(0, 0, -1)
-		}
+	st := start
+	for i := 0; i <= diffdays; i++ {
+		// date init in every loop?
+		date := strings.Split(st.Format(time.RFC3339), "T")[0]
+		values = append(values, 0)
+		dates[date] = i
+		st = st.AddDate(0, 0, 1)
 	}
 
 	res := tmtLC.Query(tamatoTable, "", untilToday).(map[string]float64)
-	fmt.Println(res)
-	time.Sleep(5 * time.Second)
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v

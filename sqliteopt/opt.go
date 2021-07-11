@@ -106,9 +106,10 @@ func updateTomato(args ...interface{}) int64 {
 }
 
 const (
-	lc = "lineChart"
+	lc  = "lineChart"
 	txt = "text"
 )
+
 type Metric string
 
 // metrics needed to query
@@ -192,10 +193,10 @@ func _query(chartType, statement, timeslot string) interface{} {
 		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
 		st := time.Date(y, M, d, 0, 0, 0, 0, location)
 		et := time.Date(y, M, d+1, 0, 0, 0, 0, location)
-		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())	
+		statement += fmt.Sprintf(" and endTime >= %v and endTime < %v;", st.Unix(), et.Unix())
 	case "untiltoday":
 		// y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
-		st := time.Date(y, M, d, 0, 0, 0, 0, location)
+		st := time.Date(y, M-1, d, 0, 0, 0, 0, location)
 		et := now
 		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY day;", st.Unix(), et.Unix())
 	case "untilweek":
@@ -215,10 +216,10 @@ func _query(chartType, statement, timeslot string) interface{} {
 	rows, err := db.Query(statement)
 	hdlerr(err)
 	defer rows.Close()
-	var ( 
-		res float64
-		dt string
-		count float64
+	var (
+		res     float64
+		dt      string
+		count   float64
 		dtCount = make(map[string]float64)
 	)
 	switch chartType {
@@ -232,12 +233,9 @@ func _query(chartType, statement, timeslot string) interface{} {
 		for rows.Next() {
 			err = rows.Scan(&dt, &count)
 			hdlerr(err)
-			fmt.Println(dt, count)
 			dtCount[dt] = count
-			fmt.Println(dtCount)
-			time.Sleep(5 * time.Second)
 		}
-			return  dtCount
+		return dtCount
 	default:
 		return nil
 	}
