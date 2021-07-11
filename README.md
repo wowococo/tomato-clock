@@ -1,5 +1,5 @@
 # tomato-clock 🍅
-Pomodoro Technique, this is a project to learn golang for me. The project is inspired by 'Focus To-Do' application that I am using. The feature set is based on [antonmedv/countdown](https://github.com/antonmedv/countdown) and inspired by the [mum4k/termdash](https://github.com/mum4k/termdash) project.
+Pomodoro Technique, this is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using. The feature set is based on [antonmedv/countdown](https://github.com/antonmedv/countdown) and inspired by the [mum4k/termdash](https://github.com/mum4k/termdash) project.
 
 tomato-clock is a cross-platform terminal based app.
 

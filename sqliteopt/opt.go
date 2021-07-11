@@ -147,7 +147,7 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 type TomatoLC string
 
 // linechart inputs needed to query
-func (tmtLC TomatoLC) Query(table, col, timeslot string) interface{} {
+func (tmtLC TomatoLC) Query(table, timeslot string) interface{} {
 	var statement string
 	switch table {
 	case "tomato":
@@ -200,10 +200,14 @@ func _query(chartType, statement, timeslot string) interface{} {
 		et := now
 		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY day;", st.Unix(), et.Unix())
 	case "untilweek":
-		weekday := now.Weekday()
-		mondate := now.AddDate(0, 0, int(time.Monday-weekday))
+		mon := func(t time.Time) time.Time {
+			weekday := t.Weekday()
+			mondate := t.AddDate(0, 0, int(time.Monday-weekday))
+			return mondate
+		}
+		mondate := mon(now)
 		y, M, d, location := mondate.Year(), mondate.Month(), mondate.Day(), mondate.Location()
-		st := time.Date(y, M-6, d, 0, 0, 0, 0, location)
+		st := mon(time.Date(y, M-6, d, 0, 0, 0, 0, location))
 		et := now
 		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY week;", st.Unix(), et.Unix())
 	case "untilmonth":

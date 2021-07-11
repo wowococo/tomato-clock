@@ -37,27 +37,18 @@ type widgets struct {
 	button *layoutButtons
 }
 
-func inputs() []float64 {
-	var values []float64
-	//todo
-	for i := 0; i < 200; i++ {
-		values = append(values, float64(i))
-	}
-	return values
-}
-
 var tmtLC sqliteopt.TomatoLC
 
 // daily tomato linechart
 func dtmtInputs() ([]float64, map[int]string) {
 	var (
-		values []float64
-		dates  = make(map[string]int)
+		values  []float64
+		dates   = make(map[string]int)
+		XLabels = make(map[int]string)
 	)
 	now := time.Now()
 	y, M, d, location := now.Year(), now.Month(), now.Day(), now.Location()
 	start := time.Date(y, M-1, d, 0, 0, 0, 0, location)
-	// end := time.Date(y, M, d, 0, 0, 0, 0, location)
 	end := now
 	diff := end.Sub(start)
 	diffdays := int(diff.Hours() / 24)
@@ -65,15 +56,9 @@ func dtmtInputs() ([]float64, map[int]string) {
 	midays := diffdays / 2
 	mid := time.Date(y, M-1, d+midays, 0, 0, 0, 0, location)
 
-	var XLabels = map[int]string{
-		0:        fmt.Sprintf("%v月%v日", start.Month(), start.Day()),
-		1:        " ",
-		midays:   fmt.Sprintf("%v月%v日", mid.Month(), mid.Day()),
-		diffdays: fmt.Sprintf("%v月%v日", end.Month(), end.Day()),
-	}
-
 	st := start
 	for i := 0; i <= diffdays; i++ {
+		XLabels[i] = " "
 		// date init in every loop?
 		date := strings.Split(st.Format(time.RFC3339), "T")[0]
 		values = append(values, 0)
@@ -81,7 +66,91 @@ func dtmtInputs() ([]float64, map[int]string) {
 		st = st.AddDate(0, 0, 1)
 	}
 
-	res := tmtLC.Query(tamatoTable, "", untilToday).(map[string]float64)
+	XLabels[0] = fmt.Sprintf("%v %v", start.Month(), start.Day())
+	XLabels[midays] = fmt.Sprintf("%v %v", mid.Month(), mid.Day())
+	XLabels[diffdays] = "today"
+
+	res := tmtLC.Query(tamatoTable, untilToday).(map[string]float64)
+	for k, v := range res {
+		if i, ok := dates[k]; ok {
+			values[i] = v
+		}
+	}
+
+	return values, XLabels
+}
+
+// weekly tomato linechart
+func wtmtInputs() ([]float64, map[int]string) {
+	var (
+		values  []float64
+		dates   = make(map[string]int)
+		XLabels = make(map[int]string)
+	)
+	// mon of this week of this time
+	mon := func(t time.Time) time.Time {
+		weekday := t.Weekday()
+		mondate := t.AddDate(0, 0, int(time.Monday-weekday))
+		return mondate
+	}
+
+	now := time.Now()
+	mondate := mon(now)
+	y, M, d := mondate.Date()
+	location := mondate.Location()
+	start := mon(time.Date(y, M-6, d, 0, 0, 0, 0, location))
+	syear, sweek := start.ISOWeek()
+	end := mondate
+	eyear, eweek := end.ISOWeek()
+	diff := end.Sub(start)
+	diffdays := int(diff.Hours() / 24)
+
+	if syear == eyear {
+		diffweeks := eweek - sweek
+	} else {
+		diffweeks := eweek + 53 - sweek
+	}
+
+	midays := diffdays / 2
+	mid := mon(time.Date(y, M-1, d+midays, 0, 0, 0, 0, location))
+
+	st := start
+	for i := 0; i <= diffweeks; i++ {
+		XLabels[i] = " "
+		year, week := st.ISOWeek()
+		w := string(week)
+		if len(w) == 1 {
+			date := fmt.Sprintf("%d-0%s", year, w)
+		}
+		if len(w) == 2 {
+			date := fmt.Sprintf("%d-%s", year, w)
+		}
+
+		values = append(values, 0)
+		dates[date] = i
+		st = st.AddDate(0, 0, 7)
+	}
+
+	endOfWeek := func(start time.Time) time.Time {
+		return start.AddDate(0, 0, 6)
+	}
+	startSunday := endOfWeek(start)
+	midSunday := endOfWeek(mid)
+	XLabels[0] = fmt.Sprintf(
+		"%v %v-%v %v",
+		start.Month(),
+		start.Day(),
+		startSunday.Month(),
+		startSunday.Day())
+	XLabels[midays] = fmt.Sprintf(
+		"%v %v-%v %v",
+		mid.Month(),
+		mid.Day(),
+		midSunday.Month(),
+		midSunday.Day())
+	XLabels[diffdays] = fmt.Sprintf("%v %v-today", end.Month(), end.Day())
+
+	res := tmtLC.Query(tamatoTable, untilWeek).(map[string]float64)
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
@@ -90,6 +159,10 @@ func dtmtInputs() ([]float64, map[int]string) {
 	fmt.Println(values)
 	time.Sleep(5 * time.Second)
 	return values, XLabels
+}
+
+func mtmtInputs() {
+
 }
 
 type lCharts struct {
