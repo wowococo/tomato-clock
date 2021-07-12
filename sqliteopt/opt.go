@@ -166,7 +166,7 @@ func (tmtLC TomatoLC) Query(table, timeslot string) interface{} {
 		case "untilweek":
 			statement = "SELECT strftime('%Y-%W', endTime, 'unixepoch') week, COUNT(id) count FROM task WHERE status = 1"
 		case "untilmonth":
-			statement = "SELECT strftime('%Y%m', endTime, 'unixepoch') month, COUNT(id) count FROM task WHERE status = 1"
+			statement = "SELECT strftime('%Y-%m', endTime, 'unixepoch') month, COUNT(id) count FROM task WHERE status = 1"
 		}
 	}
 
@@ -217,6 +217,7 @@ func _query(chartType, statement, timeslot string) interface{} {
 		statement += fmt.Sprint(" and endTime >= st and endTime <= now GROUP BY month;", st.Unix(), et.Unix())
 	}
 
+	// fmt.Println(statement)
 	rows, err := db.Query(statement)
 	hdlerr(err)
 	defer rows.Close()

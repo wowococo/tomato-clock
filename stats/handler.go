@@ -3,6 +3,7 @@ package stats
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 	"tomato-clock/sqliteopt"
@@ -107,15 +108,14 @@ func wtmtInputs() ([]float64, map[int]string) {
 	diffweeks := diffdays / 7
 
 	midays := diffdays / 2
-	midweeks := diffweeks / 2 
+	midweeks := diffweeks / 2
 	mid := mon(start.AddDate(0, 0, midays))
-	
 
 	st := start
 	for i := 0; i <= diffweeks; i++ {
 		XLabels[i] = " "
 		year, week := st.ISOWeek()
-		w := string(week)
+		w := strconv.Itoa(week)
 		var date string
 		if len(w) == 1 {
 			date = fmt.Sprintf("%d-0%s", year, w)
@@ -154,8 +154,48 @@ func wtmtInputs() ([]float64, map[int]string) {
 			values[i] = v
 		}
 	}
-	fmt.Println(values)
-	time.Sleep(5 * time.Second)
+
+	return values, XLabels
+}
+
+// monthly tomato linechart
+func mtmtInputs() ([]float64, map[int]string) {
+	var (
+		values  []float64
+		dates   = make(map[string]int)
+		XLabels = make(map[int]string)
+	)
+	end := time.Now()
+
+	y, M, _ := end.Date()
+	location := end.Location()
+	start := time.Date(y-1, M, 1, 0, 0, 0, 0, location)
+
+	const diffmonths = 13
+
+	midmonths := diffmonths / 2
+	mid := time.Date(y, M-6, 1, 0, 0, 0, 0, location)
+
+	st := start
+	for i := 0; i <= diffmonths; i++ {
+		XLabels[i] = " "
+		date := strings.Split(st.Format(time.RFC3339), "T")[0][:7]
+		values = append(values, 0)
+		dates[date] = i
+		st = st.AddDate(0, 1, 0)
+	}
+
+	XLabels[0] = fmt.Sprintf("%v %v", start.Year(), start.Month())
+	XLabels[midmonths] = fmt.Sprintf("%v.%v", mid.Year(), mid.Month())
+	XLabels[diffmonths] = fmt.Sprintf("%v.%v", mid.Year(), mid.Month())
+
+	res := tmtLC.Query(tamatoTable, untilMonth).(map[string]float64)
+	for k, v := range res {
+		if i, ok := dates[k]; ok {
+			values[i] = v
+		}
+	}
+
 	return values, XLabels
 }
 
@@ -198,14 +238,16 @@ func newLineCharts() (*lCharts, error) {
 		return nil, err
 	}
 
-	values := []float64{0, 0, 0, 0, 0}
-	var labels map[int]string	
-	err = mtmtLC.Series("monthtomato", values, linechart.SeriesXLabels(labels))
+	values2, XLabels2 := wtmtInputs()
+	err = mtmtLC.Series("monthtomato", values2, linechart.SeriesXLabels(XLabels2))
 
 	dtaskLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
+
+	values := []int{1, 2, 3, 4}
+	var labels map[int]string
 	err = dtaskLC.Series("daytask", values, linechart.SeriesXLabels(labels))
 
 	wtaskLC, err := linechart.New(opts...)
