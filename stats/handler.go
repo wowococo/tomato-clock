@@ -99,31 +99,29 @@ func wtmtInputs() ([]float64, map[int]string) {
 	y, M, d := mondate.Date()
 	location := mondate.Location()
 	start := mon(time.Date(y, M-6, d, 0, 0, 0, 0, location))
-	syear, sweek := start.ISOWeek()
+	// syear, sweek := start.ISOWeek()
 	end := mondate
-	eyear, eweek := end.ISOWeek()
+	// eyear, eweek := end.ISOWeek()
 	diff := end.Sub(start)
 	diffdays := int(diff.Hours() / 24)
-
-	if syear == eyear {
-		diffweeks := eweek - sweek
-	} else {
-		diffweeks := eweek + 53 - sweek
-	}
+	diffweeks := diffdays / 7
 
 	midays := diffdays / 2
-	mid := mon(time.Date(y, M-1, d+midays, 0, 0, 0, 0, location))
+	midweeks := diffweeks / 2 
+	mid := mon(start.AddDate(0, 0, midays))
+	
 
 	st := start
 	for i := 0; i <= diffweeks; i++ {
 		XLabels[i] = " "
 		year, week := st.ISOWeek()
 		w := string(week)
+		var date string
 		if len(w) == 1 {
-			date := fmt.Sprintf("%d-0%s", year, w)
+			date = fmt.Sprintf("%d-0%s", year, w)
 		}
 		if len(w) == 2 {
-			date := fmt.Sprintf("%d-%s", year, w)
+			date = fmt.Sprintf("%d-%s", year, w)
 		}
 
 		values = append(values, 0)
@@ -142,13 +140,13 @@ func wtmtInputs() ([]float64, map[int]string) {
 		start.Day(),
 		startSunday.Month(),
 		startSunday.Day())
-	XLabels[midays] = fmt.Sprintf(
+	XLabels[midweeks] = fmt.Sprintf(
 		"%v %v-%v %v",
 		mid.Month(),
 		mid.Day(),
 		midSunday.Month(),
 		midSunday.Day())
-	XLabels[diffdays] = fmt.Sprintf("%v %v-today", end.Month(), end.Day())
+	XLabels[diffweeks] = fmt.Sprintf("%v %v-today", end.Month(), end.Day())
 
 	res := tmtLC.Query(tamatoTable, untilWeek).(map[string]float64)
 	for k, v := range res {
@@ -159,10 +157,6 @@ func wtmtInputs() ([]float64, map[int]string) {
 	fmt.Println(values)
 	time.Sleep(5 * time.Second)
 	return values, XLabels
-}
-
-func mtmtInputs() {
-
 }
 
 type lCharts struct {
@@ -185,8 +179,8 @@ func newLineCharts() (*lCharts, error) {
 		return nil, err
 	}
 
-	values, XLabels := dtmtInputs()
-	err = dtmtLC.Series("daytomato", values, linechart.SeriesXLabels(XLabels))
+	values0, XLabels0 := dtmtInputs()
+	err = dtmtLC.Series("daytomato", values0, linechart.SeriesXLabels(XLabels0))
 	if err != nil {
 		return nil, err
 	}
@@ -195,13 +189,17 @@ func newLineCharts() (*lCharts, error) {
 	if err != nil {
 		return nil, err
 	}
-	var labels map[int]string
-	err = wtmtLC.Series("weektomato", values, linechart.SeriesXLabels(labels))
+
+	values1, XLabels1 := wtmtInputs()
+	err = wtmtLC.Series("weektomato", values1, linechart.SeriesXLabels(XLabels1))
 
 	mtmtLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
+
+	values := []float64{0, 0, 0, 0, 0}
+	var labels map[int]string	
 	err = mtmtLC.Series("monthtomato", values, linechart.SeriesXLabels(labels))
 
 	dtaskLC, err := linechart.New(opts...)
