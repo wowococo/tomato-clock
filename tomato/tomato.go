@@ -1,6 +1,7 @@
 package tomato
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -198,6 +199,10 @@ loop:
 }
 
 func Tomato() {
+	var d = flag.String("d", "25m", "tomato clock duration")
+	var t = flag.String("t", "Unnamed", "task name")
+	var chart = flag.String("chart", "", "report form")
+	flag.Parse()
 	if len(os.Args) != 2 {
 		fmt.Println(usage)
 	}

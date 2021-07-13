@@ -78,7 +78,7 @@ func dtmtInputs(table string) ([]float64, map[int]string) {
 	case taskTable:
 		res = lct.Query(taskTable, untilToday).(map[string]float64)
 	}
- 
+
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
@@ -141,6 +141,7 @@ func wtmtInputs(table string) ([]float64, map[int]string) {
 	}
 	startSunday := endOfWeek(start)
 	midSunday := endOfWeek(mid)
+	endSunday := endOfWeek(end)
 	XLabels[0] = fmt.Sprintf(
 		"%v %v-%v %v",
 		start.Month(),
@@ -153,7 +154,12 @@ func wtmtInputs(table string) ([]float64, map[int]string) {
 		mid.Day(),
 		midSunday.Month(),
 		midSunday.Day())
-	XLabels[diffweeks] = fmt.Sprintf("%v %v-today", end.Month(), end.Day())
+	XLabels[diffweeks] = fmt.Sprintf(
+		"%v %v-%v %v",
+		end.Month(),
+		end.Day(),
+		endSunday.Month(),
+		endSunday.Day())
 
 	res := make(map[string]float64)
 	if table == tomatoTable {
@@ -162,7 +168,7 @@ func wtmtInputs(table string) ([]float64, map[int]string) {
 	if table == taskTable {
 		res = lct.Query(taskTable, untilWeek).(map[string]float64)
 	}
-	
+
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
@@ -210,7 +216,7 @@ func mtmtInputs(table string) ([]float64, map[int]string) {
 	if table == taskTable {
 		res = lct.Query(taskTable, untilMonth).(map[string]float64)
 	}
-	
+
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
