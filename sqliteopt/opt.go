@@ -144,10 +144,10 @@ func (mtc Metric) Query(table, col, timeslot string) string {
 	return strconv.FormatFloat(res, 'f', prec, 64)
 }
 
-type TomatoLC string
+type LChart string
 
 // linechart inputs needed to query
-func (tmtLC TomatoLC) Query(table, timeslot string) interface{} {
+func (lct LChart) Query(table, timeslot string) interface{} {
 	var statement string
 	switch table {
 	case "tomato":
@@ -157,7 +157,7 @@ func (tmtLC TomatoLC) Query(table, timeslot string) interface{} {
 		case "untilweek":
 			statement = "SELECT strftime('%Y-%W', endTime, 'unixepoch') week, SUM(progress) count FROM tomato WHERE status in (1,3)"
 		case "untilmonth":
-			statement = "SELECT strftime('%Y%m', endTime, 'unixepoch') month, SUM(progress) count FROM tomato WHERE status in (1,3)"
+			statement = "SELECT strftime('%Y-%m', endTime, 'unixepoch') month, SUM(progress) count FROM tomato WHERE status in (1,3)"
 		}
 	case "task":
 		switch timeslot {
@@ -214,10 +214,11 @@ func _query(chartType, statement, timeslot string) interface{} {
 		// y, M, location := now.Year(), now.Month(), now.Location()
 		st := time.Date(y-1, M, 1, 0, 0, 0, 0, location)
 		et := now
-		statement += fmt.Sprint(" and endTime >= st and endTime <= now GROUP BY month;", st.Unix(), et.Unix())
+		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY month;", st.Unix(), et.Unix())
 	}
 
 	// fmt.Println(statement)
+	// time.Sleep(5 * time.Second)
 	rows, err := db.Query(statement)
 	hdlerr(err)
 	defer rows.Close()

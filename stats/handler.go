@@ -38,10 +38,10 @@ type widgets struct {
 	button *layoutButtons
 }
 
-var tmtLC sqliteopt.TomatoLC
+var lct sqliteopt.LChart
 
-// daily tomato linechart
-func dtmtInputs() ([]float64, map[int]string) {
+// daily tomato linechart and daily task linechart
+func dtmtInputs(table string) ([]float64, map[int]string) {
 	var (
 		values  []float64
 		dates   = make(map[string]int)
@@ -71,7 +71,14 @@ func dtmtInputs() ([]float64, map[int]string) {
 	XLabels[midays] = fmt.Sprintf("%v %v", mid.Month(), mid.Day())
 	XLabels[diffdays] = "today"
 
-	res := tmtLC.Query(tamatoTable, untilToday).(map[string]float64)
+	res := make(map[string]float64)
+	switch table {
+	case tomatoTable:
+		res = lct.Query(tomatoTable, untilToday).(map[string]float64)
+	case taskTable:
+		res = lct.Query(taskTable, untilToday).(map[string]float64)
+	}
+ 
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
@@ -81,8 +88,8 @@ func dtmtInputs() ([]float64, map[int]string) {
 	return values, XLabels
 }
 
-// weekly tomato linechart
-func wtmtInputs() ([]float64, map[int]string) {
+// weekly tomato linechart and weekly task linechart
+func wtmtInputs(table string) ([]float64, map[int]string) {
 	var (
 		values  []float64
 		dates   = make(map[string]int)
@@ -148,7 +155,14 @@ func wtmtInputs() ([]float64, map[int]string) {
 		midSunday.Day())
 	XLabels[diffweeks] = fmt.Sprintf("%v %v-today", end.Month(), end.Day())
 
-	res := tmtLC.Query(tamatoTable, untilWeek).(map[string]float64)
+	res := make(map[string]float64)
+	if table == tomatoTable {
+		res = lct.Query(tomatoTable, untilWeek).(map[string]float64)
+	}
+	if table == taskTable {
+		res = lct.Query(taskTable, untilWeek).(map[string]float64)
+	}
+	
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
@@ -158,8 +172,8 @@ func wtmtInputs() ([]float64, map[int]string) {
 	return values, XLabels
 }
 
-// monthly tomato linechart
-func mtmtInputs() ([]float64, map[int]string) {
+// monthly tomato linechart and monthly task linechart
+func mtmtInputs(table string) ([]float64, map[int]string) {
 	var (
 		values  []float64
 		dates   = make(map[string]int)
@@ -185,11 +199,18 @@ func mtmtInputs() ([]float64, map[int]string) {
 		st = st.AddDate(0, 1, 0)
 	}
 
-	XLabels[0] = fmt.Sprintf("%v %v", start.Year(), start.Month())
-	XLabels[midmonths] = fmt.Sprintf("%v.%v", mid.Year(), mid.Month())
-	XLabels[diffmonths] = fmt.Sprintf("%v.%v", mid.Year(), mid.Month())
+	XLabels[0] = fmt.Sprintf("%v-%v", start.Year(), int(start.Month()))
+	XLabels[midmonths] = fmt.Sprintf("%v-%v", mid.Year(), int(mid.Month()))
+	XLabels[diffmonths] = fmt.Sprintf("%v-%v", mid.Year(), int(mid.Month()))
 
-	res := tmtLC.Query(tamatoTable, untilMonth).(map[string]float64)
+	res := make(map[string]float64)
+	if table == tomatoTable {
+		res = lct.Query(tomatoTable, untilMonth).(map[string]float64)
+	}
+	if table == taskTable {
+		res = lct.Query(taskTable, untilMonth).(map[string]float64)
+	}
+	
 	for k, v := range res {
 		if i, ok := dates[k]; ok {
 			values[i] = v
@@ -218,8 +239,7 @@ func newLineCharts() (*lCharts, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	values0, XLabels0 := dtmtInputs()
+	values0, XLabels0 := dtmtInputs(tomatoTable)
 	err = dtmtLC.Series("daytomato", values0, linechart.SeriesXLabels(XLabels0))
 	if err != nil {
 		return nil, err
@@ -229,38 +249,51 @@ func newLineCharts() (*lCharts, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	values1, XLabels1 := wtmtInputs()
+	values1, XLabels1 := wtmtInputs(tomatoTable)
 	err = wtmtLC.Series("weektomato", values1, linechart.SeriesXLabels(XLabels1))
+	if err != nil {
+		return nil, err
+	}
 
 	mtmtLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
-
-	values2, XLabels2 := wtmtInputs()
+	values2, XLabels2 := mtmtInputs(tomatoTable)
 	err = mtmtLC.Series("monthtomato", values2, linechart.SeriesXLabels(XLabels2))
+	if err != nil {
+		return nil, err
+	}
 
 	dtaskLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
-
-	values := []int{1, 2, 3, 4}
-	var labels map[int]string
-	err = dtaskLC.Series("daytask", values, linechart.SeriesXLabels(labels))
+	values3, XLabels3 := dtmtInputs(taskTable)
+	err = dtaskLC.Series("daytask", values3, linechart.SeriesXLabels(XLabels3))
+	if err != nil {
+		return nil, err
+	}
 
 	wtaskLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
-	err = wtaskLC.Series("weektask", values, linechart.SeriesXLabels(labels))
+	values4, XLabels4 := wtmtInputs(taskTable)
+	err = wtaskLC.Series("weektask", values4, linechart.SeriesXLabels(XLabels4))
+	if err != nil {
+		return nil, err
+	}
 
 	mtaskLC, err := linechart.New(opts...)
 	if err != nil {
 		return nil, err
 	}
-	err = mtaskLC.Series("monthtask", values, linechart.SeriesXLabels(labels))
+	values5, XLabels5 := mtmtInputs(taskTable)
+	err = mtaskLC.Series("monthtask", values5, linechart.SeriesXLabels(XLabels5))
+	if err != nil {
+		return nil, err
+	}
 
 	return &lCharts{
 		dtmt:  dtmtLC,
@@ -285,7 +318,7 @@ type staticText struct {
 }
 
 const (
-	tamatoTable = "tomato"
+	tomatoTable = "tomato"
 	taskTable   = "task"
 )
 
@@ -305,43 +338,61 @@ const (
 
 func newText() (*staticText, error) {
 	var mtc sqliteopt.Metric
-	v0 := mtc.Query(tamatoTable, tomatoColPgs, allTime)
+	v0 := mtc.Query(tomatoTable, tomatoColPgs, allTime)
 	alltmtT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = alltmtT.Write("    "+v0, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v1 := mtc.Query(tamatoTable, tomatoColPgs, thisweek)
+	v1 := mtc.Query(tomatoTable, tomatoColPgs, thisweek)
 	wtmtT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = wtmtT.Write("    "+v1, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v2 := mtc.Query(tamatoTable, tomatoColPgs, today)
+	v2 := mtc.Query(tomatoTable, tomatoColPgs, today)
 	ttmtT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = ttmtT.Write("    "+v2, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v3 := mtc.Query(tamatoTable, tomatoColTf, allTime)
+	v3 := mtc.Query(tomatoTable, tomatoColTf, allTime)
 	allftT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = allftT.Write("    "+v3, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v4 := mtc.Query(tamatoTable, tomatoColTf, thisweek)
+	v4 := mtc.Query(tomatoTable, tomatoColTf, thisweek)
 	wftT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = wftT.Write("    "+v4, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
 	}
 
-	v5 := mtc.Query(tamatoTable, tomatoColTf, today)
+	v5 := mtc.Query(tomatoTable, tomatoColTf, today)
 	tftT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = tftT.Write("    "+v5, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
@@ -349,6 +400,9 @@ func newText() (*staticText, error) {
 
 	v6 := mtc.Query(taskTable, "", allTime)
 	alltaskT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = alltaskT.Write("    "+v6, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
@@ -356,6 +410,9 @@ func newText() (*staticText, error) {
 
 	v7 := mtc.Query(taskTable, "", thisweek)
 	wtaskT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = wtaskT.Write("    "+v7, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
@@ -363,6 +420,9 @@ func newText() (*staticText, error) {
 
 	v8 := mtc.Query(taskTable, "", today)
 	ttaskT, err := text.New()
+	if err != nil {
+		return nil, err
+	}
 	err = ttaskT.Write("    "+v8, text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 	if err != nil {
 		return nil, err
@@ -543,7 +603,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 	case layoutmtask:
 		upcols = append(upcols,
 			grid.RowHeightPerc(60,
-				grid.Widget(w.lc.mtmt)))
+				grid.Widget(w.lc.mtask)))
 
 	}
 	builder := grid.New()
