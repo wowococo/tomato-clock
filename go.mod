@@ -1,4 +1,4 @@
-module tomato-clock
+module github.com/wowococo/tomato-clock
 
 go 1.16
 
