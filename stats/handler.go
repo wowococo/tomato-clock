@@ -3,10 +3,10 @@ package stats
 import (
 	"context"
 	"fmt"
+	"github.com/wowococo/tomato-clock/sqliteopt"
 	"strconv"
 	"strings"
 	"time"
-	"tomato-clock/sqliteopt"
 
 	"github.com/mum4k/termdash"
 	_ "github.com/mum4k/termdash/align"

@@ -3,10 +3,10 @@ package tomato
 import (
 	"flag"
 	"fmt"
+	"github.com/wowococo/tomato-clock/sqliteopt"
+	"github.com/wowococo/tomato-clock/stats"
 	"os"
 	"time"
-	"tomato-clock/sqliteopt"
-	"tomato-clock/stats"
 	"unicode/utf8"
 
 	"github.com/nsf/termbox-go"

@@ -1,8 +1,7 @@
 package main
 
 import (
-	// _ "tomato-clock/sqliteopt"
-	"tomato-clock/tomato"
+	"github.com/wowococo/tomato-clock/tomato"
 )
 
 func main() {
