@@ -199,17 +199,20 @@ loop:
 }
 
 func Tomato() {
-	var d = flag.String("d", "25m", "tomato clock duration")
+	var d = flag.Duration("d", 25*time.Minute, "tomato clock duration")
+	var bt = flag.Duration("bt", 5*time.Minute, "break time duration")
 	var t = flag.String("t", "Unnamed", "task name")
-	var chart = flag.String("chart", "", "report form")
+	var chart = flag.Bool("chart", false, "show report form, metrics and linechart (default false)")
+	var endtask = flag.String("endtask", "", "mark a task finished")
 	flag.Parse()
-	if len(os.Args) != 2 {
-		fmt.Println(usage)
-	}
-	duration, err := time.ParseDuration(os.Args[1])
-	if err != nil {
-		fmt.Println("time format error", usage)
-	}
+
+	// why this three lines can't print
+	// fmt.Println("hhhhhh", len(os.Args))
+	// if len(os.Args) == 1 {
+	// 	flag.PrintDefaults()
+	// }
+
+	duration := *d
 
 	tbinit()
 
@@ -219,17 +222,64 @@ func Tomato() {
 			queues <- termbox.PollEvent()
 		}
 	}()
-	timeleft := duration
-	// start a tamato clock
-	taskID := sqliteopt.PostTask("learngo", Running)
-	tomatoID := sqliteopt.PostTomato(taskID, duration, Running)
-	countdown(timeleft, tomatoID, false)
 
-	// transfer an integer number of units to a duration
-	// bt := time.Duration(5 * time.Second)
+	fmt.Println(duration, *bt, *t, *chart, *endtask)
+	var flagset = make(map[string]flag.Value)
+	flag.Visit(func(f *flag.Flag) {
+		flagset[f.Name] = f.Value
+	})
+
+	if len(flagset) == 0 {
+		flag.PrintDefaults()
+	}
+
+	if _, ok := flagset["d"]; ok {
+		timeleft := duration
+		// start a tamato clock
+		taskID, ok := sqliteopt.GetTask(*t)
+		fmt.Println(taskID, ok)
+		if ok {
+			sqliteopt.PutTask(taskID)
+		} else {
+			if *t != "" {
+				taskID = sqliteopt.PostTask(*t, Running)
+			} else {
+				os.Exit(2)
+			}
+		}
+
+		tomatoID := sqliteopt.PostTomato(taskID, duration, Running)
+		countdown(timeleft, tomatoID, false)
+
+		// start to break between tomatoes
+		breaktime(*bt, tomatoID)
+	}
+
+	if *endtask != "" {
+		taskID, ok := sqliteopt.GetTask(*t)
+		if ok {
+			sqliteopt.PutTask(Finished, taskID)
+		}
+
+	}
+
+	// timeleft := duration
+	// start a tamato clock
+	// taskID, ok := sqliteopt.GetTask(*t)
+	// if ok {
+	// 	affect := sqliteopt.PutTask(taskID)
+	// } else {
+	// 	taskID = sqliteopt.PostTask(*t, Running)
+	// }
+
+	// tomatoID := sqliteopt.PostTomato(taskID, duration, Running)
+	// countdown(timeleft, tomatoID, false)
+
 	// start to break between tomatoes
-	// breaktime(bt, tomatoID)
+	// breaktime(*bt, tomatoID)
 
 	// stats
-	stats.Draw()
+	if *chart {
+		stats.Draw()
+	}
 }

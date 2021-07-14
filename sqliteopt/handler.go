@@ -1,6 +1,8 @@
 package sqliteopt
 
-import "time"
+import (
+	"time"
+)
 
 func PostTask(name string, status int8) int64 {
 	createTime, updateTime := getTime()
@@ -9,6 +11,24 @@ func PostTask(name string, status int8) int64 {
 
 	id := insertTask(name, listID, status, createTime, updateTime)
 	return id
+}
+
+func GetTask(name string) (id int64, ok bool) {
+	id = queryTask(name)
+	ok = true
+	if id == int64(0) {
+		ok = false
+	}
+	return
+}
+
+func PutTask(args ...interface{}) int64 {
+	_, ut := getTime()
+	//add an element at the beginning of the slice
+	args = append([]interface{}{ut}, args...)
+	affect := updateTask(args...)
+
+	return affect
 }
 
 func PostTomato(taskID int64, d time.Duration, status int8) int64 {

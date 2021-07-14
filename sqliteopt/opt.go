@@ -17,7 +17,7 @@ const (
 
 func init() {
 	db = createdb()
-	createtb()
+	createtable()
 }
 
 func createdb() *sql.DB {
@@ -27,10 +27,10 @@ func createdb() *sql.DB {
 	return db
 }
 
-func createtb() {
+func createtable() {
 	task := `CREATE TABLE IF NOT EXISTS task(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name VARCHAR(255),
+		name VARCHAR(255) UNIQUE,
 		listID INTEGER DEFAULT 0,
 		status TINYINT,
 		createTime INTEGER,
@@ -39,6 +39,8 @@ func createtb() {
 
 	stmt, err := db.Prepare(task)
 	hdlerr(err)
+	defer stmt.Close()
+
 	stmt.Exec()
 
 	tomato := `CREATE TABLE IF NOT EXISTS tomato(
@@ -55,6 +57,8 @@ func createtb() {
 
 	stmt, err = db.Prepare(tomato)
 	hdlerr(err)
+	defer stmt.Close()
+
 	stmt.Exec()
 
 }
@@ -90,11 +94,48 @@ func insertTomato(taskID int64, args ...interface{}) int64 {
 
 }
 
+func queryTask(name string) (id int64) {
+	statement := `SELECT id FROM task WHERE name = ?`
+	rows, err := db.Query(statement, name)
+	hdlerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&id)
+		hdlerr(err)
+	}
+	return
+
+}
+
+func updateTask(args ...interface{}) (affect int64) {
+	var statement string
+	if len(args) == 2 {
+		statement = `UPDATE task SET updateTime=? WHERE id=?`
+	}
+	if len(args) == 3 {
+		statement = `UPDATE task SET updateTime=?, status=? WHERE id=?`
+	}
+
+	stmt, err := db.Prepare(statement)
+	hdlerr(err)
+	defer stmt.Close()
+
+	res, err := stmt.Exec(args...)
+	hdlerr(err)
+
+	affect, err = res.RowsAffected()
+	fmt.Println()
+	hdlerr(err)
+
+	return
+}
+
 func updateTomato(args ...interface{}) int64 {
 	statement := `UPDATE tomato SET timefocused=?, progress=?, endTime=?, updateTime=?, status=? 
 		WHERE id=?`
 	stmt, err := db.Prepare(statement)
 	hdlerr(err)
+	defer stmt.Close()
 
 	res, err := stmt.Exec(args...)
 	hdlerr(err)
