@@ -3,6 +3,7 @@ package sqliteopt
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -21,7 +22,11 @@ func init() {
 }
 
 func createdb() *sql.DB {
-	dataSrc := fmt.Sprintf("./%s", dbName)
+	dir, err := os.Getwd()
+	dir = "/Users/zz/Documents/code/gogogo/src/tomato-clock"
+	dataSrc := fmt.Sprintf("%s/%s", dir, dbName)
+	fmt.Println(dataSrc)
+	time.Sleep(5 * time.Second)
 	db, err := sql.Open("sqlite3", dataSrc)
 	hdlerr(err)
 	return db
