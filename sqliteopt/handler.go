@@ -22,10 +22,13 @@ func GetTask(name string) (id int64, ok bool) {
 	return
 }
 
-func PutTask(args ...interface{}) int64 {
-	_, ut := getTime()
+func PutTask(flag string, args ...interface{}) int64 {
+	et, ut := getTime()
 	//add an element at the beginning of the slice
 	args = append([]interface{}{ut}, args...)
+	if flag == "endtask" {
+		args = append([]interface{}{et}, args...)
+	}
 	affect := updateTask(args...)
 
 	return affect

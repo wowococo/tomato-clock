@@ -198,11 +198,17 @@ loop:
 	}
 }
 
+const (
+	ENDTASK = "endtask"
+)
+
 func Tomato() {
 	var d = flag.Duration("d", 25*time.Minute, "tomato clock duration")
 	var bt = flag.Duration("bt", 5*time.Minute, "break time duration")
 	var t = flag.String("t", "Unnamed", "task name")
-	var chart = flag.Bool("chart", false, "show report form, metrics and linechart (default false)")
+	// bool type don't like string type need to input true or false, if you only inout "-chart",
+	// then it is true, even you input "-chart false", it also be true.
+	var chart = flag.Bool("chart", false, "show report form, metrics and linechart")
 	var endtask = flag.String("endtask", "", "mark a task finished")
 	flag.Parse()
 
@@ -223,7 +229,6 @@ func Tomato() {
 		}
 	}()
 
-	fmt.Println(duration, *bt, *t, *chart, *endtask)
 	var flagset = make(map[string]flag.Value)
 	flag.Visit(func(f *flag.Flag) {
 		flagset[f.Name] = f.Value
@@ -237,9 +242,8 @@ func Tomato() {
 		timeleft := duration
 		// start a tamato clock
 		taskID, ok := sqliteopt.GetTask(*t)
-		fmt.Println(taskID, ok)
 		if ok {
-			sqliteopt.PutTask(taskID)
+			sqliteopt.PutTask("", taskID)
 		} else {
 			if *t != "" {
 				taskID = sqliteopt.PostTask(*t, Running)
@@ -256,27 +260,12 @@ func Tomato() {
 	}
 
 	if *endtask != "" {
-		taskID, ok := sqliteopt.GetTask(*t)
+		taskID, ok := sqliteopt.GetTask(*endtask)
 		if ok {
-			sqliteopt.PutTask(Finished, taskID)
+			sqliteopt.PutTask(ENDTASK, Finished, taskID)
 		}
 
 	}
-
-	// timeleft := duration
-	// start a tamato clock
-	// taskID, ok := sqliteopt.GetTask(*t)
-	// if ok {
-	// 	affect := sqliteopt.PutTask(taskID)
-	// } else {
-	// 	taskID = sqliteopt.PostTask(*t, Running)
-	// }
-
-	// tomatoID := sqliteopt.PostTomato(taskID, duration, Running)
-	// countdown(timeleft, tomatoID, false)
-
-	// start to break between tomatoes
-	// breaktime(*bt, tomatoID)
 
 	// stats
 	if *chart {

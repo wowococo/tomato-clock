@@ -112,8 +112,8 @@ func updateTask(args ...interface{}) (affect int64) {
 	if len(args) == 2 {
 		statement = `UPDATE task SET updateTime=? WHERE id=?`
 	}
-	if len(args) == 3 {
-		statement = `UPDATE task SET updateTime=?, status=? WHERE id=?`
+	if len(args) == 4 {
+		statement = `UPDATE task SET endTime=?, updateTime=?, status=? WHERE id=?`
 	}
 
 	stmt, err := db.Prepare(statement)
@@ -124,7 +124,6 @@ func updateTask(args ...interface{}) (affect int64) {
 	hdlerr(err)
 
 	affect, err = res.RowsAffected()
-	fmt.Println()
 	hdlerr(err)
 
 	return
@@ -258,8 +257,6 @@ func _query(chartType, statement, timeslot string) interface{} {
 		statement += fmt.Sprintf(" and endTime >= %v and endTime <= %v GROUP BY month;", st.Unix(), et.Unix())
 	}
 
-	// fmt.Println(statement)
-	// time.Sleep(5 * time.Second)
 	rows, err := db.Query(statement)
 	hdlerr(err)
 	defer rows.Close()

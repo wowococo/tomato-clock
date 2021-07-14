@@ -21,6 +21,9 @@ import (
 	"github.com/mum4k/termdash/widgets/text"
 )
 
+// redrawInterval is how often termdash redraws the screen.
+const redrawInterval = 25 * time.Millisecond
+
 type layoutType int
 
 const (
@@ -69,7 +72,7 @@ func dtmtInputs(table string) ([]float64, map[int]string) {
 
 	XLabels[0] = fmt.Sprintf("%v %v", start.Month(), start.Day())
 	XLabels[midays] = fmt.Sprintf("%v %v", mid.Month(), mid.Day())
-	XLabels[diffdays] = "today"
+	XLabels[diffdays-1] = "  today"
 
 	res := make(map[string]float64)
 	switch table {
@@ -154,8 +157,8 @@ func wtmtInputs(table string) ([]float64, map[int]string) {
 		mid.Day(),
 		midSunday.Month(),
 		midSunday.Day())
-	XLabels[diffweeks] = fmt.Sprintf(
-		"%v %v-%v %v",
+	XLabels[diffweeks-3] = fmt.Sprintf(
+		"   %v %v-%v %v",
 		end.Month(),
 		end.Day(),
 		endSunday.Month(),
@@ -191,7 +194,7 @@ func mtmtInputs(table string) ([]float64, map[int]string) {
 	location := end.Location()
 	start := time.Date(y-1, M, 1, 0, 0, 0, 0, location)
 
-	const diffmonths = 13
+	const diffmonths = 12
 
 	midmonths := diffmonths / 2
 	mid := time.Date(y, M-6, 1, 0, 0, 0, 0, location)
@@ -207,7 +210,7 @@ func mtmtInputs(table string) ([]float64, map[int]string) {
 
 	XLabels[0] = fmt.Sprintf("%v-%v", start.Year(), int(start.Month()))
 	XLabels[midmonths] = fmt.Sprintf("%v-%v", mid.Year(), int(mid.Month()))
-	XLabels[diffmonths] = fmt.Sprintf("%v-%v", mid.Year(), int(mid.Month()))
+	XLabels[diffmonths-1] = fmt.Sprintf("       %v-%v", end.Year(), int(end.Month()))
 
 	res := make(map[string]float64)
 	if table == tomatoTable {
@@ -526,9 +529,9 @@ func setLayout(c *container.Container, w *widgets, lt layoutType) error {
 func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 	upcols := []grid.Element{
 		grid.RowHeightPerc(10,
-			grid.ColWidthPerc(11,
+			grid.ColWidthPerc(12,
 				grid.Widget(w.t.alltomatoT,
-					container.BorderTitle("总完成番茄数"),
+					container.BorderTitle(" 总完成番茄数"),
 					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light),
 					container.PaddingLeftPercent(3),
@@ -558,7 +561,7 @@ func gridLayout(w *widgets, lt layoutType) ([]container.Option, error) {
 					container.BorderTitle(" 今日专注时间"),
 					container.BorderTitleAlignCenter(),
 					container.Border(linestyle.Light))),
-			grid.ColWidthPerc(11,
+			grid.ColWidthPerc(10,
 				grid.Widget(w.t.alltaskT,
 					container.BorderTitle(" 总完成任务"),
 					container.BorderTitleAlignCenter(),
