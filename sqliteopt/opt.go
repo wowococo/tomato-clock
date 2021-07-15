@@ -23,7 +23,9 @@ func init() {
 
 func createdb() *sql.DB {
 	dir, err := os.Getwd()
-	dir = "/Users/zz/Documents/code/gogogo/src/tomato-clock"
+	fmt.Println(dir)
+	time.Sleep(5 * time.Second)
+	// dir = "/Users/zz/Documents/code/gogogo/src/tomato-clock/dbfile"
 	dataSrc := fmt.Sprintf("%s/%s", dir, dbName)
 	fmt.Println(dataSrc)
 	time.Sleep(5 * time.Second)
