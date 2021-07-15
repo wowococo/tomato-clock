@@ -1,7 +1,8 @@
 # tomato-clock 🍅
 Pomodoro Technique, this is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using. The feature set is based on [antonmedv/countdown](https://github.com/antonmedv/countdown) and inspired by the [mum4k/termdash](https://github.com/mum4k/termdash) project.
 
-tomato-clock is a cross-platform terminal based app.
+tomato-clock is a simple terminal based app.I only successfully test it on macOS platform. It maybe has bug on windows platform.
+
 
 ## Installation
 
@@ -10,19 +11,35 @@ go get github.com/wowococo/tomato-clock
 ```
 
 ## Usage
-the second param use the time.Duration format, for example: 
+```
+$ tomato-clock -help
 
-	# start a 25 seconds tomato clock
-	tomato 25s  
+Usage of tomato-clock:
+  -bt duration
+    	break time duration (default 5m0s)
+  -chart
+    	show report form, metrics and linechart
+  -d duration
+    	tomato clock duration (default 25m0s)
+  -endtask string
+    	mark a task finished
+  -t string
+    	task name (default "Unnamed")
+````
+For example: 
 
 	# start a 25 minutes tomato clock
-	tomato 25m
+	tomato-clock -d 25m
 
-	# start a 1 hour 20 minutes 20 seconds tomato clock
-	tomato 1h20m20s
+	# start a 45 minutes tomato clock to do the task named "learngo", and set break time 10 minutes
+	# after the tomato clock.
+	tomato-clock -d 45m -bt 10m -t learngo
 
-OR:
-```
-go run main.go 25m
-```
+	# mark the task "learngo" finished
+	tomato-clock -endtask learngo
+
+	# show the tomato report, include metrics and linechart
+	tomato-clock -chart
+
+
 
