@@ -22,13 +22,10 @@ func init() {
 }
 
 func createdb() *sql.DB {
-	dir, err := os.Getwd()
-	fmt.Println(dir)
-	time.Sleep(5 * time.Second)
-	// dir = "/Users/zz/Documents/code/gogogo/src/tomato-clock/dbfile"
+	gopath := os.Getenv("GOPATH")
+	dir := gopath + "/src/tomato-clock"
 	dataSrc := fmt.Sprintf("%s/%s", dir, dbName)
-	fmt.Println(dataSrc)
-	time.Sleep(5 * time.Second)
+
 	db, err := sql.Open("sqlite3", dataSrc)
 	hdlerr(err)
 	return db
