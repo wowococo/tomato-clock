@@ -2,13 +2,15 @@ package tomato
 
 import (
 	"context"
-	"image"
 	"log"
 	"time"
 
+	"github.com/mum4k/termdash/cell"
+
 	"github.com/mum4k/termdash"
-	"github.com/mum4k/termdash/align"
+	// "github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/container/grid"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/text"
@@ -21,6 +23,8 @@ func breaktime(d time.Duration, tomatoID int64) {
 
 }
 
+const breakID = "break"
+
 func echo() {
 	t, err := tcell.New()
 	if err != nil {
@@ -28,24 +32,46 @@ func echo() {
 	}
 	defer t.Close()
 
+	c, err := container.New(t, container.ID(breakID))
+	if err != nil {
+		panic(err)
+	}
+
 	_, cancel := context.WithCancel(context.Background())
 	borderless, err := text.New()
 	if err != nil {
 		panic(err)
 	}
-	borderless.Options().MaximumSize = image.Point{X: 10, Y: 10}
 
-	if err := borderless.Write("TIME TO BREAK ^_^ "); err != nil {
+	if err := borderless.Write("TIME TO BREAK ^_^ ",
+		text.WriteCellOpts(
+			cell.Bold(),
+			cell.Blink(),
+			cell.FgColor(cell.ColorAqua))); err != nil {
 		panic(err)
 	}
 
-	c, err := container.New(t,
-		container.PlaceWidget(borderless),
-		container.AlignHorizontal(align.HorizontalCenter),
-		container.AlignVertical(align.VerticalMiddle))
+	cols := []grid.Element{
+		grid.ColWidthPerc(33),
+		grid.ColWidthPerc(33,
+			grid.RowHeightPerc(40),
+			grid.RowHeightPerc(20, grid.Widget(borderless)),
+			grid.RowHeightPerc(40)),
+		grid.ColWidthPerc(33),
+	}
+
+	builder := grid.New()
+	builder.Add(cols...)
+	gridOpts, err := builder.Build()
 	if err != nil {
 		panic(err)
 	}
+
+	err = c.Update(breakID, gridOpts...)
+	if err != nil {
+		panic(err)
+	}
+
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {
 			cancel()

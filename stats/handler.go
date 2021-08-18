@@ -3,16 +3,18 @@ package stats
 import (
 	"context"
 	"fmt"
-	"github.com/wowococo/tomato-clock/sqliteopt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/wowococo/tomato-clock/sqliteopt"
 
 	"github.com/mum4k/termdash"
 	_ "github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/container/grid"
+	"github.com/mum4k/termdash/keyboard"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/terminal/terminalapi"
@@ -668,7 +670,7 @@ func Draw() {
 	hdlerr(err)
 
 	quitter := func(k *terminalapi.Keyboard) {
-		if k.Key == 'q' || k.Key == 'Q' {
+		if k.Key == keyboard.KeyEsc || k.Key == keyboard.KeyCtrlC {
 			cancel()
 		}
 	}

@@ -3,11 +3,12 @@ package tomato
 import (
 	"flag"
 	"fmt"
-	"github.com/wowococo/tomato-clock/sqliteopt"
-	"github.com/wowococo/tomato-clock/stats"
 	"os"
 	"time"
 	"unicode/utf8"
+
+	"github.com/wowococo/tomato-clock/sqliteopt"
+	"github.com/wowococo/tomato-clock/stats"
 
 	"github.com/nsf/termbox-go"
 )
@@ -123,7 +124,7 @@ func draw(startX, startY int, t Text, bk bool) {
 	x, y := startX, startY
 	var fg, bg termbox.Attribute
 	if bk {
-		fg = termbox.ColorGreen
+		fg = termbox.ColorLightGreen
 	} else {
 		fg = termbox.ColorDefault
 	}
@@ -147,6 +148,7 @@ func countdown(timeleft time.Duration, tomatoID int64, bk bool) {
 	// tomato initial duration
 	d := timeleft
 	w, h := termbox.Size()
+
 	str := format(timeleft)
 	text := toText(str)
 	startX, startY := w/2-text.width()/2, h/2-text.height()/2
