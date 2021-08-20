@@ -13,12 +13,6 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-var usage = `tomato usage:
-  tomato 25s
-  tomato 25m
-  tomato 1h20m20s
-`
-
 var (
 	timer    *time.Timer
 	ticker   *time.Ticker
