@@ -52,12 +52,12 @@ func echo() {
 	}
 
 	cols := []grid.Element{
-		grid.ColWidthPerc(33),
-		grid.ColWidthPerc(33,
+		grid.ColWidthPerc(40),
+		grid.ColWidthPerc(30,
 			grid.RowHeightPerc(40),
 			grid.RowHeightPerc(20, grid.Widget(borderless)),
 			grid.RowHeightPerc(40)),
-		grid.ColWidthPerc(33),
+		grid.ColWidthPerc(30),
 	}
 
 	builder := grid.New()
