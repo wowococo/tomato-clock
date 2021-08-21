@@ -159,8 +159,8 @@ func wtmtInputs(table string) ([]float64, map[int]string) {
 		mid.Day(),
 		midSunday.Month(),
 		midSunday.Day())
-	XLabels[diffweeks-3] = fmt.Sprintf(
-		"   %v %v-%v %v",
+	XLabels[diffweeks-4] = fmt.Sprintf(
+		"%v %v-%v %v",
 		end.Month(),
 		end.Day(),
 		endSunday.Month(),
