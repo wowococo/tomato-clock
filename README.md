@@ -1,7 +1,7 @@
 # tomato-clock 🍅
 Pomodoro Technique, this is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using. 
 
-![tomato-clock](https://gitee.com/beagain/blogimage/raw/master/uPic/tomato-clock.gif)
+![tomato-clock](./doc/images/tomato-clock.gif)
 
 The feature set is based on [antonmedv/countdown](https://github.com/antonmedv/countdown) and inspired by the [mum4k/termdash](https://github.com/mum4k/termdash) project.
 
