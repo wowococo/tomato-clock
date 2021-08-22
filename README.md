@@ -1,5 +1,8 @@
 # tomato-clock 🍅
-Pomodoro Technique, this is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using. 
+Pomodoro Technique, this is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using.
+
+	tomato-clock -d 5s -bt 2s -t learngo
+Use above command to start a 5 seconds tomato clock to do the task named "learngo", and set break time 2 seconds after the tomato clock.
 
 ![tomato-clock](./doc/images/tomato-clock.gif)
 
@@ -16,7 +19,7 @@ go get -u github.com/wowococo/tomato-clock
 
 ## Usage
 
-use tomato-clock command if  you add  `GOPATH/bin/` to your PATH. 
+Use `tomato-clock` command if  you add  `GOPATH/bin/` to your PATH. 
 
 ```
 $ tomato-clock -help
@@ -42,19 +45,28 @@ go run main.go -d 25m -bt 5m -t learngo
 
 
 
-For example: 
+For example: 	
 
-	# start a 25 minutes tomato clock
-	tomato-clock -d 25m
-	
-	# start a 45 minutes tomato clock to do the task named "learngo", and set break time 10 minutes
-	# after the tomato clock.
-	tomato-clock -d 45m -bt 10m -t learngo
-	
-	# mark the task "learngo" finished
-	tomato-clock -endtask learngo
-	
-	# show the tomato report, include metrics and linechart
+Starts a 25 minutes tomato clock.
+
+```
+tomato-clock -d 25m
+```
+
+Starts a 45 minutes tomato clock to do the task named "learngo", and set break time 10 minutes after the tomato clock.
+
+```
+tomato-clock -d 45m -bt 10m -t learngo
+```
+
+Marks the task "learngo" finished.
+
+```
+tomato-clock -endtask learngo
+```
+
+Shows the tomato report, include metrics and linechart.
+
 	tomato-clock -chart
 
 ## Key binding
