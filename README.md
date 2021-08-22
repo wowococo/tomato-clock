@@ -11,10 +11,13 @@ tomato-clock is a simple terminal based app.I only successfully test it on macOS
 ## Installation
 
 ```
-go get github.com/wowococo/tomato-clock
+go get -u github.com/wowococo/tomato-clock
 ```
 
 ## Usage
+
+use tomato-clock command if  you add  `GOPATH/bin/` to your PATH. 
+
 ```
 $ tomato-clock -help
 
@@ -30,6 +33,15 @@ Usage of tomato-clock:
   -t string
     	task name (default "Unnamed")
 ````
+If not, you can go to your pkg directory, then
+
+```
+cd github.com/wowococo/tomato-clock
+go run main.go -d 25m -bt 5m -t learngo
+```
+
+
+
 For example: 
 
 	# start a 25 minutes tomato clock
@@ -45,5 +57,9 @@ For example:
 	# show the tomato report, include metrics and linechart
 	tomato-clock -chart
 
+## Key binding
 
++ `p` or `P`: To pause the tomato-clock countdown.
++ `c` or `C`: To resume the tomato-clock countdown.
++ `Esc` or `Ctrl+C`: To quit the tomato-clock when counting down or showing chart.
 
