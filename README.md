@@ -1,8 +1,13 @@
 # tomato-clock 🍅
-Pomodoro Technique, this is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using.
+The Pomodoro Technique is a time management system that encourages people to work *with* the time they have—rather than against it. Using this method, you break your workday into 25-minute chunks separated by five-minute breaks. These intervals are referred to as pomodoros. After about four pomodoros, you take a longer break of about 15 to 20 minutes.
 
-	tomato-clock -d 5s -bt 2s -t learngo
-Use above command to start a 5 seconds tomato clock to do the task named "learngo", and set break time 2 seconds after the tomato clock.
+This is a project to learn Golang for me. The project is inspired by 'Focus To-Do' application that I am using.
+
+Use the following command to start a 5 seconds tomato clock to do the task named "learngo", and set break time 2 seconds after the tomato clock, which is just to make Gif easier. 
+
+```
+tomato-clock -d 5s -bt 2s -t learngo
+```
 
 ![tomato-clock](./doc/images/tomato-clock.gif)
 
